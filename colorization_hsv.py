@@ -3,6 +3,7 @@ from keras.callbacks import EarlyStopping
 from keras.callbacks import TensorBoard
 from datetime import datetime
 import os
+import argparse
 
 
 import load_train_data
@@ -10,14 +11,21 @@ import multilayer_perceptron
 import predict
 import plot
 
+parser = argparse.ArgumentParser(description="colorization")
+parser.add_argument('-e', '--epochs', type=int, default=100)
+parser.add_argument('-b', '--batch', type=int, default=100)
+parser.add_argument('-c', '--categorize', type=string)
+args = parser.parse_args()
+
+
 h_train, s_train, mono_train = load_train_data.Load_hsv()
 
 Hmodel = multilayer_perceptron.Build()
 Smodel = multilayer_perceptron.Build()
 
 
-batch_size = 200
-epochs = 200 
+batch_size = args.batch
+epochs = args.epochs 
 
 Hmodel.summary()
 folder = "pre_HSV_" + datetime.now().strftime("%Y%m%d-%H%M%S")
@@ -32,7 +40,6 @@ history_h = Hmodel.fit(mono_train, h_train,
         verbose=1,
         validation_split=0.1,
         callbacks=[early_stopping])
-)
 
 #basename = "model/Hmodel_" + datetime.now().strftime("%Y%m%d-%H%M%S") + ".h5"
 #Hmodel.save(basename)
@@ -46,7 +53,6 @@ history_s = Smodel.fit(mono_train, s_train,
         verbose=1,
         validation_split=0.1,
         callbacks=[early_stopping])
-)
 
 #basename = "model/Smodel_" + datetime.now().strftime("%Y%m%d-%H%M%S") + ".h5"
 #Smodel.save(basename)
