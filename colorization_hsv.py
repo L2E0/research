@@ -14,22 +14,20 @@ import plot
 parser = argparse.ArgumentParser(description="colorization")
 parser.add_argument('-e', '--epochs', type=int, default=100)
 parser.add_argument('-b', '--batch', type=int, default=100)
-parser.add_argument('-c', '--categorize', type=string)
+parser.add_argument('-c', '--category', type=str, default="grass")
 args = parser.parse_args()
 
 
-h_train, s_train, mono_train = load_train_data.Load_hsv()
+h_train, s_train, mono_train = load_train_data.Load_hsv(args.category)
 
 Hmodel = multilayer_perceptron.Build()
 Smodel = multilayer_perceptron.Build()
 
 
 batch_size = args.batch
-epochs = args.epochs 
+epochs = args.epochs
 
 Hmodel.summary()
-folder = "pre_HSV_" + datetime.now().strftime("%Y%m%d-%H%M%S")
-os.mkdir(folder)
 
 early_stopping = EarlyStopping(monitor='val_loss', patience=20, verbose=1)
 #tensor_board = TensorBoard(log_dir=folder, histogram_freq=1, write_graph=True)
@@ -59,8 +57,9 @@ history_s = Smodel.fit(mono_train, s_train,
 print ("\007")
 
 
-predict.Predict_HS(Hmodel, Smodel, folder)
-print ("\007")
-plot.Plot_history(history_h.history, folder+"/h_history")
-plot.Plot_history(history_s.history, folder+"/s_history")
+predir = "pre_HSV_" + datetime.now().strftime("%Y%m%d-%H%M%S")
+os.mkdir(predir)
+predict.Predict_HS(Hmodel, Smodel, args.category, predir)
+plot.Plot_history(history_h.history, predir+"/h_history")
+plot.Plot_history(history_s.history, predir+"/s_history")
 
