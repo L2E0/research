@@ -27,16 +27,17 @@ def Load_bgr():
 
     return blue_list, green_list, red_list, mono_list
 
-def Load_hsv():
+def Load_hsv(category):
     mono_list = []
     h_list = []
     s_list = []
     v_list = []#mono
+    path = "train_" + category
 
-    for file in os.listdir("train"):
+    for file in os.listdir(path):
         if file != ".DS_Store":
             print(file)
-            filepath = "train/" + file
+            filepath = path + "/" + file
             src = cv2.imread(filepath, 1)
             #src = cv2.resize(src, (256, 256, 3))
             hsv = cv2.cvtColor(src, cv2.COLOR_BGR2HSV)

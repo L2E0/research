@@ -34,16 +34,17 @@ def Predict_BGR(Bmodel, Gmodel, Rmodel):
 
     plot_model(Bmodel, (folder + "/model.png"), show_shapes=True)
 
-def Predict_HS(Hmodel, Smodel, folder):
+def Predict_HS(Hmodel, Smodel, category, pre_dir):
     mono_list = []
     v_list = []
     file_list = []
+    path = "test_" + category
     #folder = "pre_HSV_" + datetime.now().strftime("%Y%m%d-%H%M%S")
     #os.mkdir(folder)
 
-    for file in os.listdir("test"):
+    for file in os.listdir(path):
         if file != ".DS_Store":
-            filepath = "test/" + file
+            filepath =  path + file
             src = cv2.imread(filepath, 1)
             src = cv2.cvtColor(src, cv2.COLOR_BGR2GRAY)
             v_list.append(np.ravel(src))
