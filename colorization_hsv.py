@@ -60,6 +60,7 @@ print ("\007")
 predir = "pre_HSV_" + datetime.now().strftime("%Y%m%d-%H%M%S")
 os.mkdir(predir)
 predict.Predict_HS(Hmodel, Smodel, args.category, predir)
+print ("\007")
 plot.Plot_history(history_h.history, predir+"/h_history")
 plot.Plot_history(history_s.history, predir+"/s_history")
 
