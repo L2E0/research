@@ -29,7 +29,7 @@ epochs = args.epochs
 
 Hmodel.summary()
 
-early_stopping = EarlyStopping(monitor='val_loss', patience=20, verbose=1)
+early_stopping = EarlyStopping(monitor='loss', patience=10, verbose=1)
 #tensor_board = TensorBoard(log_dir=folder, histogram_freq=1, write_graph=True)
 
 history_h = Hmodel.fit(mono_train, h_train,

@@ -37,7 +37,6 @@ def Load_hsv(category):
 
     for file in os.listdir(path):
         if file != ".DS_Store":
-            print(file)
             filepath = path + "/" + file
             src = cv2.imread(filepath, 1)
             #src = cv2.resize(src, (256, 256, 3))

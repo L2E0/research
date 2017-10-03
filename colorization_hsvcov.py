@@ -26,13 +26,13 @@ epochs = args.epochs
 
 Hmodel.summary()
 
-early_stopping = EarlyStopping(monitor='val_loss', patience=10, verbose=1)
+early_stopping = EarlyStopping(monitor='loss', patience=10, verbose=1)
 history_h = Hmodel.fit(mono_train, h_train,
         batch_size=batch_size,
         epochs=epochs,
         verbose=1,
-        validation_split=0.1,)
-        #callbacks=[early_stopping])
+        validation_split=0.1,
+        callbacks=[early_stopping])
 #basename = "model/Hmodel_" + datetime.now().strftime("%Y%m%d-%H%M%S") + ".h5"
 #Hmodel.save(basename)
 print ("\007")
@@ -43,8 +43,8 @@ history_s = Smodel.fit(mono_train, s_train,
         batch_size=batch_size,
         epochs=epochs,
         verbose=1,
-        validation_split=0.1,)
-        #callbacks=[early_stopping])
+        validation_split=0.1,
+        callbacks=[early_stopping])
 #basename = "model/Smodel_" + datetime.now().strftime("%Y%m%d-%H%M%S") + ".h5"
 #Smodel.save(basename)
 print ("\007")
