@@ -69,7 +69,7 @@ def Predict_HS(Hmodel, Smodel, category, pre_dir):
         out = cv2.cvtColor(out, cv2.COLOR_HSV2BGR)
         cv2.imwrite(filename, out)
 
-    plot_model(Hmodel, (pre_dir + "/model.png"), show_shapes=True)
+    #plot_model(Hmodel, (pre_dir + "/model.png"), show_shapes=True)
 
 
 

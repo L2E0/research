@@ -1,7 +1,6 @@
 import os
 import numpy as np
 import cv2
-from keras.preprocessing.image import ImageDataGenerator as Gen
 def Load_bgr(category):
     mono_list = []
     red_list = []
@@ -29,52 +28,34 @@ def Load_bgr(category):
 
     return blue_list, green_list, red_list, mono_list
 
-def Load_genh(category, batch_size):
-    path = "train_" + category
+def Load_hsv(category):
     mono_list = []
     h_list = []
-
-
-    while True:
-        for file in os.listdir(path):
-            if file != ".DS_Store":
-                filepath = path + "/" + file
-                src = cv2.imread(filepath, 1)
-                hsv = cv2.cvtColor(src, cv2.COLOR_BGR2HSV)
-                h_list.append(np.ravel(hsv[:,:,0] / 180.0))
-                gry = cv2.cvtColor(src, cv2.COLOR_BGR2GRAY)
-                mono_list.append(np.ravel(gry / 255.0))
-                if len(h_list) == batch_size:
-                    h_list = np.array(h_list)
-                    mono_list = np.array(mono_list)
-                    yield (mono_list, h_list)
-                    mono_list = []
-                    h_list = []
-
-def Load_gens(category, batch_size):
-    path = "train_" + category
-    mono_list = []
     s_list = []
+    v_list = []#mono
+    #path = "train_" + category 
+    path = "/my_data/train_beach"
 
-    while True:
-        for file in os.listdir(path):
-            if file != ".DS_Store":
-                filepath = path + "/" + file
-                src = cv2.imread(filepath, 1)
-                hsv = cv2.cvtColor(src, cv2.COLOR_BGR2HSV)
-                s_list.append(np.ravel(hsv[:,:,1] / 255.0))
-                gry = cv2.cvtColor(src, cv2.COLOR_BGR2GRAY)
-                mono_list.append(np.ravel(gry / 255.0))
-                if len(s_list) == batch_size:
-                    s_list = np.array(s_list)
-                    mono_list = np.array(mono_list)
-                    yield (mono_list, s_list)
-                    mono_list = []
-                    s_list = []
+    for file in os.listdir(path):
+        if file != ".DS_Store":
+            filepath = path + "/" + file
+            src = cv2.imread(filepath, 1)
+            #src = cv2.resize(src, (256, 256, 3))
+            hsv = cv2.cvtColor(src, cv2.COLOR_BGR2HSV)
+            #hsv = np.array(cv2.split(hsv))
+            h_list.append(np.ravel(hsv[:,:,0] / 180.0))
+            s_list.append(np.ravel(hsv[:,:,1] / 255.0))
+            v_list.append(np.ravel(hsv[:,:,2] / 255.0))
+            gry = cv2.cvtColor(src, cv2.COLOR_BGR2GRAY)
+            mono_list.append(np.ravel(gry / 255.0))
+
+    h_list = np.array(h_list)
+    s_list = np.array(s_list)
+    v_list = np.array(v_list)
+    mono_list = np.array(mono_list)
 
 
-
-
+    return h_list, s_list, mono_list
 
 def Load_cov(category):
     mono_list = []
