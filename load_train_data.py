@@ -29,49 +29,35 @@ def Load_bgr(category):
 
     return blue_list, green_list, red_list, mono_list
 
-def Load_genh(category, batch_size):
+def Load_gen(category, batch_size, hs):
     path = "train_" + category
     mono_list = []
-    h_list = []
+    y_list = []
 
 
-    while True:
-        for file in os.listdir(path):
-            if file != ".DS_Store":
-                filepath = path + "/" + file
-                src = cv2.imread(filepath, 1)
-                hsv = cv2.cvtColor(src, cv2.COLOR_BGR2HSV)
-                h_list.append(np.ravel(hsv[:,:,0] / 180.0))
-                gry = cv2.cvtColor(src, cv2.COLOR_BGR2GRAY)
-                mono_list.append(np.ravel(gry / 255.0))
-                if len(h_list) == batch_size:
-                    h_list = np.array(h_list)
-                    mono_list = np.array(mono_list)
-                    yield (mono_list, h_list)
-                    mono_list = []
-                    h_list = []
+    datagen = Gen(horizontal_flip=True,
+     vertical_flip=True,
+     rotation_range=180,
+     width_shift_range=0.2,
+     height_shift_range=0.2,
+     zoom_range=0.3)
+    imggen = datagen.flow_from_directory(directory='./', classes=[path], batch_size=1, class_mode=None)
 
-def Load_gens(category, batch_size):
-    path = "train_" + category
-    mono_list = []
-    s_list = []
-
-    while True:
-        for file in os.listdir(path):
-            if file != ".DS_Store":
-                filepath = path + "/" + file
-                src = cv2.imread(filepath, 1)
-                hsv = cv2.cvtColor(src, cv2.COLOR_BGR2HSV)
-                s_list.append(np.ravel(hsv[:,:,1] / 255.0))
-                gry = cv2.cvtColor(src, cv2.COLOR_BGR2GRAY)
-                mono_list.append(np.ravel(gry / 255.0))
-                if len(s_list) == batch_size:
-                    s_list = np.array(s_list)
-                    mono_list = np.array(mono_list)
-                    yield (mono_list, s_list)
-                    mono_list = []
-                    s_list = []
-
+    for batch in imggen:
+        img = np.roll(batch[0], -1, axis=2)
+        hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+        gry = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        if hs == 'h':
+            y_list.append(np.ravel(hsv[:,:,0] / 180.0))
+        elif hs == 's':
+            y_list.append(np.ravel(hsv[:,:,1] / 255.0))
+        mono_list.append(np.ravel(gry / 255.0))
+        if len(y_list) == batch_size:
+            y_list = np.array(y_list)
+            mono_list = np.array(mono_list)
+            yield (mono_list, y_list)
+            mono_list = []
+            y_list = []
 
 
 

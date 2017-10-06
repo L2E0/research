@@ -8,7 +8,9 @@ for file in os.listdir("train_beach"):
         src_u = cv2.flip(src, 0)
         src_f = cv2.flip(src, 1)
         src_uf = cv2.flip(src, -1)
+        filename, ext = os.path.splitext(filepath)
+        filename = filename + ".png"
 
-        #cv2.imwrite(filepath.replace('.', "_u."), src_u)
-        cv2.imwrite(filepath.replace('.', "_f."), src_f)
-        #cv2.imwrite(filepath.replace('.', "_uf."), src_uf)
+        cv2.imwrite(filename.replace('.', "_u."), src_u, [16,0])
+        cv2.imwrite(filename.replace('.', "_f."), src_f, [16,0])
+        cv2.imwrite(filename.replace('.', "_uf."), src_uf, [16,0])

@@ -19,8 +19,8 @@ parser.add_argument('-c', '--category', type=str, default="grass")
 args = parser.parse_args()
 
 
-generator_h= load_train_data.Load_genh(args.category, args.batch)
-generator_s = load_train_data.Load_gens(args.category, args.batch)
+generator_h= load_train_data.Load_gen(args.category, args.batch, 'h')
+generator_s = load_train_data.Load_gen(args.category, args.batch, 's')
 
 
 
@@ -71,3 +71,4 @@ print ("\007")
 plot.Plot_history(history_h.history, predir+"/h_history")
 plot.Plot_history(history_s.history, predir+"/s_history")
 
+os.system('shutdown -s')
