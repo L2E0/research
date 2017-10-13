@@ -9,6 +9,7 @@ def Plot_history(history, dir):
     plt.xlabel('epoch')
     plt.ylabel('loss')
     plt.legend(loc='center right')
+    plt.ylim([0,0.5])
     plt.savefig(dir)
     plt.figure()
     #pylab.savefig(dir)

@@ -33,10 +33,12 @@ def Load_bgr(category):
 
     return blue_list, green_list, red_list, mono_list
 
-def Load_hsv(category, batch_size, hs):
+@background(max_prefetch=320)
+def Load_hsv(category, batch_size):
     path = "train_" + category
     mono_list = []
-    y_list = []
+    h_list = []
+    s_list = []
 
 
     datagen = Gen(horizontal_flip=True,
@@ -51,17 +53,17 @@ def Load_hsv(category, batch_size, hs):
         img = np.flip(batch[0], axis=2)
         hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
         gry = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-        if hs == 'h':
-            y_list.append(np.ravel(hsv[:,:,0] / 360.0))
-        elif hs == 's':
-            y_list.append(np.ravel(hsv[:,:,1]))
+        h_list.append(np.ravel(hsv[:,:,0] / 360.0))
+        s_list.append(np.ravel(hsv[:,:,1]))
         mono_list.append(np.ravel(gry / 255.0))
-        if len(y_list) == batch_size:
-            y_list = np.array(y_list)
+        if len(h_list) == batch_size:
+            h_list = np.array(h_list)
+            s_list = np.array(s_list)
             mono_list = np.array(mono_list)
-            yield (mono_list, y_list)
+            yield (mono_list, [h_list, s_list])
             mono_list = []
-            y_list = []
+            h_list = []
+            s_list = []
 
 
 @background(max_prefetch=320)

@@ -37,7 +37,7 @@ def Predict_BGR(Bmodel, Gmodel, Rmodel, category, pre_dir):
 
     plot_model(Bmodel, (pre_dir + "/model.png"), show_shapes=True)
 
-def Predict_HS(Hmodel, Smodel, category, pre_dir):
+def Predict_HS(model, category, pre_dir):
     mono_list = []
     v_list = []
     file_list = []
@@ -69,8 +69,7 @@ def Predict_HS(Hmodel, Smodel, category, pre_dir):
             org_s.append(np.ravel(src[:,:,1]))
 
     mono_list = np.array(mono_list)
-    hpre = Hmodel.predict(mono_list)
-    spre = Smodel.predict(mono_list)
+    pre = model.predict(mono_list)
     org_list = np.array(org_list)
     org_h = np.array(org_h)
     org_s = np.array(org_s)
@@ -80,7 +79,7 @@ def Predict_HS(Hmodel, Smodel, category, pre_dir):
 
 
 
-    for h, s, v, org, h_org, s_org, filename in zip(hpre, spre, v_list, org_list, org_h, org_s, file_list):
+    for h, s, v, org, h_org, s_org, filename in zip(pre[0], pre[1], v_list, org_list, org_h, org_s, file_list):
         h = np.array(h*179.0, dtype='uint8')
         s = np.array(s*255.0, dtype='uint8')
         out = np.c_[h,s,v]
@@ -99,7 +98,7 @@ def Predict_HS(Hmodel, Smodel, category, pre_dir):
 
     f.close()
 
-    plot_model(Hmodel, (pre_dir + "/model.png"), show_shapes=True)
+    plot_model(model, (pre_dir + "/model.png"), show_shapes=True)
 
 
 
