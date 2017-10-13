@@ -41,7 +41,8 @@ history = model.fit_generator(
         validation_data = validation_data_gen.Load_valid(args.category, 256, 'hs'),
         validation_steps = 10,
         verbose=1,
-        callbacks=[early_stopping])
+        #callbacks=[early_stopping])
+)
 
 
 
@@ -50,5 +51,6 @@ os.mkdir(predir)
 predict.Predict_HS(model, args.category, predir)
 plot.Plot_history(history.history, predir+"/history")
 
-#basename = predir + "/model_weights.h5"
+basename = predir + "/model_weights.h5"
 model.save_weights(basename)
+os.system('shutdown -s')
