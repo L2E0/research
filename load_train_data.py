@@ -6,32 +6,34 @@ import concurrent.futures
 import itertools
 import threading
 from keras.preprocessing.image import ImageDataGenerator as Gen
-def Load_bgr(category):
+def Load_bgr(category, batch_size):
     mono_list = []
-    red_list = []
-    blue_list = []
-    green_list = []
+    src_list = []
     path = "train_" + category
 
-    for file in os.listdir(path):
-        if file != ".DS_Store":
-            filepath = path + "/" + file
-            src = cv2.imread(filepath, 1)
-            src = cv2.resize(src, (256, 256))
-            #bgr = np.array(cv2.split(src))
-            blue_list.append(np.ravel(src[:,:,0] / 255.0))
-            green_list.append(np.ravel(src[:,:,1] / 255.0))
-            red_list.append(np.ravel(src[:,:,2] / 255.0))
-            gry = cv2.cvtColor(src, cv2.COLOR_BGR2GRAY)
-            mono_list.append(np.ravel(gry / 255.0))
-
-    blue_list = np.array(blue_list)
-    green_list = np.array(green_list)
-    red_list = np.array(red_list)
-    mono_list = np.array(mono_list)
+    datagen = Gen(horizontal_flip=True,
+     vertical_flip=True,
+     rotation_range=180,
+     width_shift_range=0.2,
+     height_shift_range=0.2,
+     zoom_range=0.3)
+    imggen = datagen.flow_from_directory(directory='./', classes=[path], batch_size=1, class_mode=None)
 
 
-    return blue_list, green_list, red_list, mono_list
+    for batch in imggen:
+        src = cv2.imread(filepath, 1)
+        src = np.transpose(src, [2,0,1])
+        gry = cv2.cvtColor(src, cv2.COLOR_BGR2GRAY)
+        src_list.append()
+        mono_list.append(np.ravel(gry / 255.0))
+        if len(mono_list) == batch_size:
+            mono_list = np.array(mono_list)
+            src_list = np.array(src_list)
+            yield (mono_list, src_list)
+            mono_list = []
+            src_list = []
+
+
 
 @background(max_prefetch=320)
 def Load_hsv(category, batch_size):
@@ -72,18 +74,19 @@ def Load_cov(category, batch_size, hs):
 
     datagen = Gen(horizontal_flip=True,
      vertical_flip=True,
-     rotation_range=180,
-     width_shift_range=0.2,
-     height_shift_range=0.2,
-     zoom_range=0.3)
+     #rotation_range=180,
+     #width_shift_range=0.2,
+     #height_shift_range=0.2,
+     #zoom_range=0.3)
+    )
     imggen = datagen.flow_from_directory(directory='./', classes=[path], batch_size=1, class_mode=None)
 
 
     executor = concurrent.futures.ThreadPoolExecutor(32)
+    x_list = np.empty((batch_size, 32768))
+    y_list = np.empty((batch_size, 16384))
     while True:
         futures = [executor.submit(transform_img, img, hs) for img in itertools.islice(imggen,batch_size)]
-        x_list = np.empty((batch_size, 32768))
-        y_list = np.empty((batch_size, 16384))
         for i, future in enumerate(futures):
             x, y = future.result()
             x_list[i] = x

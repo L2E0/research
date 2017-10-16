@@ -4,38 +4,26 @@ import cv2
 import gc
 from skimage.measure import compare_ssim as ssim
 from datetime import datetime
-from keras.utils import plot_model
+from data_gen import xygen, batchgen
 
 
-def Predict_BGR(Bmodel, Gmodel, Rmodel, category, pre_dir):
-    mono_list = []
+def Predict_BGR(model, category, pre_dir):
     file_list = []
     path = "test_" + category
     #folder = "pre_RBG_" + datetime.now().strftime("%Y%m%d-%H%M%S")
     #os.mkdir(folder)
 
-    for file in os.listdir(path):
-        if file != ".DS_Store":
-            filepath = path + "/" + file
-            src = cv2.imread(filepath, 1)
-            src = cv2.cvtColor(src, cv2.COLOR_BGR2GRAY)
-            mono_list.append(np.ravel(src) / 255.0)
-            file_list.append(file)
+    gen = xygen(path)
+    x, y = next(batchgen(gen, 27))
 
-    mono_list = np.array(mono_list)
-    bpre = Bmodel.predict(mono_list)
-    gpre = Gmodel.predict(mono_list)
-    rpre = Rmodel.predict(mono_list)
 
-    for b, g, r, file in zip(bpre, gpre, rpre, file_list):
-        out = np.c_[b,g,r]
-        out = out.reshape((256, 256, 3))
-        out = np.array(out) * 255.0
-        out = np.clip(out, 0.0, 255.0)
-        filename = pre_dir + "/" + file
+    pre = model.predict(x)
+
+    for i, img in enumerate(pre):
+        out = np.array(img) * 255.0
+        filename = "%s/%d.png" % (pre_dir, i)
         cv2.imwrite(filename, out)
 
-    plot_model(Bmodel, (pre_dir + "/model.png"), show_shapes=True)
 
 def Predict_HS(model, category, pre_dir):
     mono_list = []

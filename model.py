@@ -2,10 +2,12 @@ from keras.models import Sequential, Model
 from keras.layers import advanced_activations
 from keras.layers import Input, Dense, Lambda
 from keras.layers import noise, concatenate
+from keras.layers.normalization import BatchNormalization
 from keras.layers.convolutional import Conv2D, UpSampling2D
 from keras.layers.pooling import MaxPooling2D
 from skimage.measure import compare_ssim as ssim
 from keras.layers.core import Dropout, Activation, Reshape, Flatten
+from keras.layers.advanced_activations import LeakyReLU
 from keras import optimizers as op
 from keras import backend as K
 import tensorflow as tf
@@ -52,19 +54,18 @@ def mean_pred(y_true, y_pred):
 
 def Build():
     mono_input = Input(shape=(65536, ), name='input')
-    x = Reshape((256, 256, 1, ))(mono_input)
     x = Conv2D(48, 2, padding='same', activation=act)(x)
     x = MaxPooling2D((2, 2), padding='same')(x)
     x = Conv2D(48, 3, padding='same', activation=act)(x)
     x = MaxPooling2D((2, 2), padding='same')(x)
-    x = Conv2D(96, 2, padding='same', activation=act)(x)
+    x =Conv2D(96, 2, padding='same', activation=act)(x)
     x = MaxPooling2D((2, 2), padding='same')(x)
     x = Conv2D(96, 3, padding='same', activation=act)(x)
     x = MaxPooling2D((2, 2), padding='same')(x)
     x = Conv2D(192, 2, padding='same', activation=act)(x)
     #x = MaxPooling2D((2, 2), padding='same')(x)
     #x = Conv2D(32, 3, padding='same', activation=act)(x)
-    x = Flatten()(x)
+    #x = Flatten()(x)
 
 
 
@@ -175,4 +176,78 @@ def combine():
     model = Model(inputs=[h_input, s_input], outputs=main_output)
     model.compile(loss='mse', optimizer=op.Adam(), metrics=['mae'])
 
+    return model
+
+def Generator():
+    #inputs = Input(shape=(256, 256, 1), name='input')
+    #x = Reshape((65536,))(inputs)
+    #x = BatchNormalization()(x)
+    #x = Activation(act)(x)
+    #x = Dense(1024, activation=act)(x)
+    #x = BatchNormalization()(x)
+    #x = Dense(1024, activation=act)(x)
+    #x = BatchNormalization()(x)
+    #x = Dense(64*64*36, activation=act)(x)
+    #x = BatchNormalization()(x)
+    #x = Reshape((64, 64, 36))(x)
+    #x = UpSampling2D((2, 2))(x)
+    #x = Conv2D(18, (5, 5), border_mode='same')(x)
+    #x = BatchNormalization()(x)
+    #x = Activation(act)(x)
+    #x = UpSampling2D((2, 2))(x)
+    #predictions = Conv2D(3, (5, 5), border_mode='same', activation='sigmoid')(x)
+    inputs = Input(shape=(256, 256, 1), name='input')
+    x = Conv2D(3, 5, strides=2, activation=act, padding='same')(inputs)
+    x = Conv2D(3, 5, strides=2, activation=act, padding='same')(x)
+    #x = Conv2D(512, 5, strides=2, activation=act, padding='same')(x)
+    #x = Conv2D(1024, 5, strides=2, activation=act, padding='same')(x)
+    #x = Conv2D(1024, 5, strides=2, activation=act, padding='same')(x)
+    x = Flatten()(x)
+    x = Dropout(0.5)(x)
+    x = Dense(4096, activation=act)(x)
+    x = Dense(4096, activation=act)(x)
+    x = Dense(4096, activation=act)(x)
+    x = Dense(4096, activation=act)(x)
+    x = Dropout(0.5)(x)
+    x = Dense(32768, activation=act)(x)
+    x = Reshape((8, 8, 512))(x)
+    x = SubpixelConv2D((8, 8, 512), scale=2)(x)
+    x = Conv2D(256, 5, strides=1, activation=act, padding='same')(x)
+    x = SubpixelConv2D((16, 16, 256), scale=2)(x)
+    x = Conv2D(128, 5, strides=1, activation=act, padding='same')(x)
+    x = SubpixelConv2D((32, 32, 128), scale=2)(x)
+    x = Conv2D(64, 5, strides=1, activation=act, padding='same')(x)
+    x = SubpixelConv2D((64, 64, 64), scale=2)(x)
+    x = Conv2D(32, 5, strides=1, activation=act, padding='same')(x)
+    x = SubpixelConv2D((128, 128, 32), scale=2)(x)
+    predictions = Conv2D(3, 5, strides=1, activation='sigmoid', padding='same')(x)
+
+    model = Model(inputs=inputs, outputs=predictions)
+
+    return model
+
+def Discriminator():
+    lrelu = LeakyReLU(0.3)
+    inputs = Input(shape=(256, 256, 3), name='input')
+    x = Conv2D(36, (5, 5), 
+                subsample=(2, 2),
+                border_mode='same',
+                activation=lrelu)(inputs)
+    x = Conv2D(72, (5, 5), subsample=(2, 2), activation=lrelu)(x)
+    x = Conv2D(108, (5, 5), subsample=(2, 2), activation=lrelu)(x)
+    x = Conv2D(108, (5, 5), subsample=(2, 2), activation=lrelu)(x)
+    x = Conv2D(108, (5, 5), subsample=(2, 2), activation=lrelu)(x)
+    x = Flatten()(x)
+    x = Dense(4096, activation=lrelu)(x)
+    x = Dropout(0.5)(x)
+    predictions = Dense(2, activation='softmax')(x)
+    model = Model(inputs=inputs, outputs=predictions)
+
+    return model
+
+def Generator_containing_discriminator(g, d):
+    model = Sequential()
+    model.add(g)
+    d.trainable = False
+    model.add(d)
     return model
