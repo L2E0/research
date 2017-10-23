@@ -5,7 +5,7 @@ from keras.layers import noise, concatenate
 from keras.layers.normalization import BatchNormalization
 from keras.layers.convolutional import Conv2D, UpSampling2D
 from keras.layers.pooling import MaxPooling2D
-from skimage.measure import compare_ssim as ssim
+#from skimage.measure import compare_ssim as ssim
 from keras.layers.core import Dropout, Activation, Reshape, Flatten
 from keras.layers.advanced_activations import LeakyReLU
 from keras import optimizers as op
@@ -18,13 +18,13 @@ act = 'relu'
 def SubpixelConv2D(input_shape, scale=4):
     """
     Keras layer to do subpixel convolution.
-    NOTE: Tensorflow backend only. Uses 
+    NOTE: Tensorflow backend only. Uses
 
 tf.depth_to_space
     Ref:
-        [1] Real-Time Single Image and Video 
+        [1] Real-Time Single Image and Video
 
-Super-Resolution Using an Efficient Sub-Pixel 
+Super-Resolution Using an Efficient Sub-Pixel
 
 Convolutional Neural Network
             Shi et Al.
@@ -35,9 +35,9 @@ Convolutional Neural Network
     """
     # upsample using depth_to_space
     def subpixel_shape(input_shape):
-        dims = [input_shape[0], 
-                input_shape[1] * scale, 
-                input_shape[2] * scale, 
+        dims = [input_shape[0],
+                input_shape[1] * scale,
+                input_shape[2] * scale,
                 int(input_shape[3] / (scale ** 2))]
         output_shape = tuple(dims)
         return output_shape
@@ -77,9 +77,9 @@ def Build():
 
 
     #x = concatenate([h, s])
-    
+
     #x = Dense(2048, activation=act, name='layer1')(mono_input)
-    #x = concatenate([x, mono_input]) 
+    #x = concatenate([x, mono_input])
     #x = Dense(8192, activation=act, name='layer2')(x)
     #x = Dense(8192, activation=act, name='layer3')(x)
     #x = Dense(8192, activation=act, name='layer4')(x)
@@ -163,7 +163,7 @@ def combine():
     h_input = Input(shape=(16384, ), name='h_input')
     h = Dense(4096, activation=act)(h_input)
     h_output = Dense(4096, activation=act, name='h_output')(h)
-    
+
     s_input = Input(shape=(16384, ), name='s_input')
     s = Dense(4096, activation=act)(s_input)
     s_output = Dense(4096, activation=act, name='s_output')(s)
@@ -229,7 +229,7 @@ def Generator():
 def Discriminator():
     lrelu = LeakyReLU(0.3)
     inputs = Input(shape=(256, 256, 3), name='input')
-    x = Conv2D(36, (5, 5), 
+    x = Conv2D(36, (5, 5),
                 subsample=(2, 2),
                 border_mode='same',
                 activation=lrelu)(inputs)

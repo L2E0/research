@@ -2,7 +2,7 @@ import os
 import numpy as np
 import cv2
 import gc
-from skimage.measure import compare_ssim as ssim
+#from skimage.measure import compare_ssim as ssim
 from datetime import datetime
 from data_gen import xygen, batchgen
 

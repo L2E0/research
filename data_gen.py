@@ -26,7 +26,7 @@ def batchgen(gen, batch_size):
         x = np.array(list(x))
         y = np.array(list(y))
         yield x, y
-        
+
 def epochgen(gen, epochs, step_size):
     stepgen = chunk(gen, step_size)
     for step_size in itertools.islice(stepgen, epochs):

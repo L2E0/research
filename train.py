@@ -12,7 +12,7 @@ def get_args():
     args = parser.parse_args()
     return args
 
-def train_data(category, batch_size):
+def train_data(category):
     path = 'train_' + category
 
     gen = xygen(path, horizontal_flip=True,
@@ -22,11 +22,11 @@ def train_data(category, batch_size):
                 height_shift_range=0.2,
                 zoom_range=0.3)
 
-def val_data(category):
     val_path = 'valid_' + category
     val_size = count_file(val_path)
     val_gen = chunk(xygen(val_path), val_size)
 
+    return gen, val_gen
 
 if __name__  == "__main__":
     args = get_args()
@@ -36,8 +36,10 @@ if __name__  == "__main__":
     if args.mode == "train":
         if offset != 0:
             model.load_weights()
-            model.train(args.batch, args.step_size, args.epochs, args.category, offset)
+            xygen, val_gen = train_data(args.category)
+            model.train(xygen, val_gen, args.batch, args.step_size, args.epochs, offset)
     elif args.mode == "predict":
+        model.load_weight()
         model.predict(args.category, offset)
     else:
         print("^^;")

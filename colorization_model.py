@@ -6,7 +6,7 @@ from keras.optimizers import Adam
 import numpy as np
 from data_gen import xygen, batchgen, epochgen, count_file, chunk
 from keras.utils import plot_model
-from skimage.measure import compare_ssim as ssim
+#from skimage.measure import compare_ssim as ssim
 import cv2
 import model
 import predict
@@ -16,7 +16,7 @@ class ColorizationModel:
     def __init__(self):
         self.generator = model.Generator()
         self.discriminator = model.Discriminator()
-        self.d_on_g = model.Generator_containing_discriminator(generator, discriminator)
+        self.d_on_g = model.Generator_containing_discriminator(self.generator, self.discriminator)
         d_optim = Adam(lr=1e-6, beta_1=0.1)
         g_optim = Adam(lr=3e-4, beta_1=0.5)
         self.d_on_g.compile(loss='binary_crossentropy', optimizer=g_optim)
@@ -50,7 +50,7 @@ class ColorizationModel:
                 #print("step %d d_loss : %f" % (step+1, d_loss))
                 label = [np.array([1, 0])] * batch_size
                 label = np.array(label)
-                g_loss = d_on_g.train_on_batch(x, label)
+                g_loss = self.d_on_g.train_on_batch(x, label)
                 #print("step %d g_loss : %f" % (step+1, g_loss))
                 if step % 50 == 49:
                     f = open('epoch.txt', 'w')
@@ -69,5 +69,13 @@ class ColorizationModel:
         gen = batchgen(gen, batch_size)
         pre = 'predictions/epoch_%d' % (epoch)
         os.mkdir(pre)
-        predict.Predict_BGR(self.generator, category, pre)
+        predictions = predict.Predict_BGR(self.generator, category, pre)
+        for i, img in enumerate(predictions):
+            out = np.array(img) * 255.0
+            filename = "%s/%d.png" % (pre_dir, i)
+            cv2.imwrite(filename, out)
+
+    def summary(self):
+        self.generator.summary()
+        self.discriminator.summary()
 
