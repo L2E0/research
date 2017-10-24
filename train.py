@@ -9,6 +9,7 @@ def get_args():
     parser.add_argument('-c', '--category', type=str, default="grass")
     parser.add_argument('-m', '--mode', type=str, default='train')
     parser.add_argument('-s', '--step_size', type=int, default=100)
+    parser.add_argument('-p', '--pattern', type=str, default='hsv')
     args = parser.parse_args()
     return args
 
