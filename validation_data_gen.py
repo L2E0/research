@@ -3,7 +3,7 @@ import numpy as np
 import cv2
 from keras.preprocessing.image import ImageDataGenerator as Gen
 
-def Load_valid(category, size, hs, cov=None):
+def Load_valid(category, size, cov=None):
     path = "valid_" + category
     mono_list = []
     h_list = []

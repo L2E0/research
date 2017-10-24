@@ -31,7 +31,7 @@ class ColorizationModel:
         plot_model(self.generator, ("generator.png"), show_shapes=True)
         plot_model(self.discriminator, ("discriminator.png"), show_shapes=True)
 
-    def train(self, gen, val_gen, batch_size=32, step_size=100, epochs=100, offset=0):
+    def train(self, category, gen, val_gen, batch_size=32, step_size=100, epochs=100, offset=0):
         gen = batchgen(gen, batch_size)
 
         for epoch, steps in enumerate(epochgen(gen, epochs, step_size)):
@@ -53,7 +53,7 @@ class ColorizationModel:
                 g_loss = self.d_on_g.train_on_batch(x, label)
                 #print("step %d g_loss : %f" % (step+1, g_loss))
                 if step % 50 == 49:
-                    f = open('epoch.txt', 'w')
+                    f = open('epoch_gan.txt', 'w')
                     f.write('%d\n' % (epoch+offset+1))
                     f.write('d_loss%f\n' % (d_loss))
                     f.write('g_loss%f\n' % (g_loss))
@@ -65,9 +65,11 @@ class ColorizationModel:
         gen = batchgen(gen, batch_size)
         self.generator.fit_generator(gen, 100, epochs=100, verbose=1)
 
-    def predict(self, gen, category, epoch):
+    def predict(self, category, epoch):
+        path = 'test_%s/' % (category)
+        gen = xygen(category)
         gen = batchgen(gen, batch_size)
-        pre = 'predictions/epoch_%d' % (epoch)
+        pre = 'predictions/gan_epoch_%d' % (epoch)
         os.mkdir(pre)
         predictions = predict.Predict_BGR(self.generator, category, pre)
         for i, img in enumerate(predictions):

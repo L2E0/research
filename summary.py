@@ -1,4 +1,4 @@
-from colorization_model import ColorizationModel
+from gan_model import ColorizationModel
 
 def summary():
     model = ColorizationModel()
