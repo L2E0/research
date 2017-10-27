@@ -44,7 +44,7 @@ class ColorizationModel:
     def predict(self, category, offset):
         path = 'test_%s' % (category)
         gen = xygen(path)
-        pre = 'predictions/hsv_epoch_%d' % (offset)
+        pre = 'predictions/%s_hsv_epoch_%d' % (category, offset)
         os.mkdir(pre)
         plot_model(self.mlp, ("%s/mlp.png" % (pre)), show_shapes=True)
         for i, img in zip(range(count_file(path)), gen):

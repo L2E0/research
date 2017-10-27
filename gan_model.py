@@ -6,7 +6,7 @@ from keras.optimizers import Adam
 import numpy as np
 from data_gen import xygen, batchgen, epochgen, count_file, chunk
 from keras.utils import plot_model
-#from skimage.measure import compare_ssim as ssim
+from skimage.measure import compare_ssim as ssim
 import cv2
 import model
 import predict
@@ -17,8 +17,8 @@ class ColorizationModel:
         self.generator = model.Generator()
         self.discriminator = model.Discriminator()
         self.d_on_g = model.Generator_containing_discriminator(self.generator, self.discriminator)
-        d_optim = Adam(lr=1e-6, beta_1=0.1)
-        g_optim = Adam(lr=3e-4, beta_1=0.5)
+        d_optim = Adam(lr=1e-5, beta_1=0.1)
+        g_optim = Adam(lr=2e-4, beta_1=0.5)
         self.d_on_g.compile(loss='binary_crossentropy', optimizer=g_optim)
         self.discriminator.trainable = True
         self.discriminator.compile(loss='binary_crossentropy', optimizer=d_optim)
@@ -33,6 +33,8 @@ class ColorizationModel:
 
     def train(self, category, gen, val_gen, batch_size=32, step_size=100, epochs=100, offset=0):
         gen = batchgen(gen, batch_size)
+        path = "valid_" + category
+        val_size = count_file(path)
 
         for epoch, steps in enumerate(epochgen(gen, epochs, step_size)):
             pred_gen = ((self.generator.predict(np.array([x]), verbose=0)[0], y) for x, y in next(val_gen))
@@ -47,11 +49,11 @@ class ColorizationModel:
                 y = [np.array([1, 0])] * batch_size + [np.array([0, 1])] * batch_size
                 y = np.array(y)
                 d_loss = self.discriminator.train_on_batch(X, y)
-                #print("step %d d_loss : %f" % (step+1, d_loss))
+                print("step %d d_loss : %f" % (step+1, d_loss))
                 label = [np.array([1, 0])] * batch_size
                 label = np.array(label)
                 g_loss = self.d_on_g.train_on_batch(x, label)
-                #print("step %d g_loss : %f" % (step+1, g_loss))
+                print("step %d g_loss : %f" % (step+1, g_loss))
                 if step % 50 == 49:
                     f = open('epoch_gan.txt', 'w')
                     f.write('%d\n' % (epoch+offset+1))
@@ -68,14 +70,10 @@ class ColorizationModel:
     def predict(self, category, epoch):
         path = 'test_%s/' % (category)
         gen = xygen(category)
-        gen = batchgen(gen, batch_size)
-        pre = 'predictions/gan_epoch_%d' % (epoch)
+        gen = batchgen(gen, count_file(path))
+        pre = 'predictions/%s_gan_epoch_%d' % (category, epoch)
         os.mkdir(pre)
-        predictions = predict.Predict_BGR(self.generator, category, pre)
-        for i, img in enumerate(predictions):
-            out = np.array(img) * 255.0
-            filename = "%s/%d.png" % (pre_dir, i)
-            cv2.imwrite(filename, out)
+        predict.Predict_BGR(self.generator, category, pre)
 
     def summary(self):
         self.generator.summary()

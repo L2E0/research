@@ -30,7 +30,8 @@ def train_data(category):
 
     return gen, val_gen
 
-def train(model, offset, resume=False, batch=32, step=100, epochs=100, category='grass', mode='train'):
+def train(model, offset, resume=False, batch=32, step=100, epochs=100, category='grass', mode='train', pattern='hsv'):
+    print(offset)
     if offset != 0:
         model.load_weights()
     xygen, val_gen = train_data(category)
@@ -49,7 +50,7 @@ if __name__  == "__main__":
     model = gan_model.ColorizationModel() if args.pattern=='gan' else hsv_model.ColorizationModel()
     offset = read_offset('epoch_%s.txt' % (args.pattern)) if args.resume or args.mode=='predict' else 0
     if args.mode == 'train':
-        train(model, offset, vars(args))
+        train(model, offset, **vars(args))
     elif args.mode =='predict':
         predict(model, offset, args.category)
     else:

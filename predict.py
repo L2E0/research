@@ -4,20 +4,17 @@ import cv2
 import gc
 #from skimage.measure import compare_ssim as ssim
 from datetime import datetime
-from data_gen import xygen, batchgen
+from data_gen import xygen, batchgen, count_file
 
 
 def Predict_BGR(model, category, pre_dir):
-    file_list = []
     path = "test_" + category
-    #folder = "pre_RBG_" + datetime.now().strftime("%Y%m%d-%H%M%S")
-    #os.mkdir(folder)
 
     gen = xygen(path)
-    x, y = next(batchgen(gen, 27))
+    x, y = next(batchgen(gen, count_file(path)))
 
 
-    pre = model.predict(x)
+    pre = model.predict_on_batch(x)
 
     for i, img in enumerate(pre):
         out = np.array(img) * 255.0
