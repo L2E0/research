@@ -1,0 +1,156 @@
+﻿%%%
+% 論文及び講演予稿用のフォーマット
+%%
+\setlength{\textheight}{257truemm}
+%
+\setlength{\textwidth}{52zw}
+%\setlength{\hoffset}{-5truemm}
+\setlength{\oddsidemargin}{-5truemm}
+\setlength{\evensidemargin}{-5truemm}
+%\setlength{\voffset}{-20truemm}
+\setlength{\topmargin}{-20truemm}
+\setlength{\footskip}{24pt}
+%
+\renewcommand{\baselinestretch}{0.91}
+%%%
+%
+\newcommand{\myid}[1]{\def\themesid{#1}}
+%
+\makeatletter
+\def\ps@myplain{\let\@mkboth\@gobbletwo% 新しいページスタイル
+\let\ps@jpl@in\ps@plain
+\let\@oddhead\@empty
+\def\@oddfoot{\reset@font\hfil\themesid--\thepage\hfil}%
+% ~~ ~~ 追加
+\let\@evenhead\@empty
+\def\@evenfoot{\reset@font\hfil\themesid--\thepage\hfil}}%
+%
+% jsarticle.clsより変更
+\renewcommand{\section}{%
+  \if@slide\clearpage\fi
+  \@startsection{section}{1}{\z@}%
+  {.5\Cvs \@plus.2\Cdp \@minus.2\Cdp}% 前アキ
+  {.1\Cvs \@plus.2\Cdp}% 後アキ
+  {\normalfont\large\headfont\raggedright}}
+\renewcommand{\subsection}{\@startsection{subsection}{2}{\z@}%
+  {.5\Cvs \@plus.1\Cdp \@minus.4\Cdp}% 前アキ
+  {.1\Cvs \@plus.2\Cdp}% 後アキ
+  {\normalfont\normalsize\headfont}}
+\renewcommand{\subsubsection}{\@startsection{subsubsection}{3}{\z@}%
+  {.5\Cvs \@plus.1\Cdp \@minus.4\Cdp}%
+  {.1\Cvs \@plus.2\Cdp}% 後アキ
+%  {\z@}%
+  {\normalfont\normalsize\headfont}}
+%
+% jsarticle  jarticle
+%   \Cvs       \baselineskip
+%   \Cdp       \dp0
+
+%
+% \maketitleの再定義
+%
+\newcommand\subtitle[1]{\def\@subtitle{#1}}
+\newcommand\supervisor[1]{\def\@supervisor{#1}}
+\global\let\@subtitle\@empty
+\global\let\@supervisor\@empty
+%\global\let\subtitle\relax
+%\global\let\supervisor\relax
+%
+\renewcommand{\maketitle}{\par
+  \twocolumn[\@maketitle]%
+}
+\def\@maketitle{%
+  \newpage\null
+  \begin{center}
+    \vskip 1.0em
+    {\Large \@title \par}\vskip 1.0em
+    \ifx\@subtitle\@empty\else{\large \@subtitle \par}\vskip 1.0em\fi
+    {研究者：\@author}　{指導教員：\@supervisor \par}
+  \end{center}%
+  \par\vskip 1.0em
+  \ifvoid\@abstractbox\else\centerline{\box\@abstractbox}\fi
+  \ifvoid\@keywordbox\else\centerline{\box\@keywordbox}\vskip1.5em\fi
+}
+%
+%
+\newlength{\abswidth}
+\setlength{\abswidth}{\textwidth}
+\addtolength{\abswidth}{-2.0cm}
+
+%\newbox\@abstractbox
+%\if@titlepage
+%  \newenvironment{abstract}{%
+%    \titlepage
+%    \null\vfil
+%    \@beginparpenalty\@lowpenalty
+%    \begin{center}%
+%      \headfont \abstractname
+%      \@endparpenalty\@M
+%    \end{center}}%
+%  {\par\vfil\null\endtitlepage}
+%\else
+  \renewenvironment{abstract}{%
+    \if@twocolumn
+      \ifx\maketitle\relax
+        \section*{\abstractname}%
+      \else
+        \global\setbox\@abstractbox\hbox\bgroup
+        \begin{minipage}[b]{\abswidth}
+          \small\parindent1zw
+          \setlength{\baselineskip}{13pt}
+          \noindent\textgt{あらまし　}%
+%          \begin{center}%
+%            {\headfont \abstractname\vspace{-.5em}\vspace{\z@}}%
+%          \end{center}%
+%          \list{}{%
+%            \listparindent\parindent
+%            \itemindent \listparindent
+%            \rightmargin \leftmargin}%
+%          \item\relax
+      \fi
+    \else
+      \small
+      \begin{center}%
+        {\headfont \abstractname\vspace{-.5em}\vspace{\z@}}%
+      \end{center}%
+      \list{}{%
+        \listparindent\parindent
+        \itemindent \listparindent
+        \rightmargin \leftmargin}%
+      \item\relax
+    \fi}{\if@twocolumn
+      \ifx\maketitle\relax
+      \else
+%        \endlist\end{minipage}\egroup
+        \end{minipage}\egroup
+      \fi
+    \else
+      \endlist
+    \fi}
+%\fi
+\newbox\@keywordbox
+\newenvironment{keyword}{%
+\global\setbox\@keywordbox\hbox\bgroup
+\begin{minipage}[b]{\abswidth}
+\small
+\setlength{\baselineskip}{13pt}
+\noindent\textgt{キーワード：　}%
+}{
+\end{minipage}\egroup
+}
+%
+\long\def\@makecaption#1#2{{\small
+  \advance\leftskip .0628\linewidth
+  \advance\rightskip .0628\linewidth
+  \vskip\abovecaptionskip
+  \sbox\@tempboxa{{\headfont#1}\hskip1zw\relax {\headfont#2}}%
+  \ifdim \wd\@tempboxa <\hsize \centering \fi
+  {\headfont#1}\hskip1zw\relax {\headfont#2}\par
+  \vskip\belowcaptionskip}}
+
+%
+\renewcommand{\thesection}{\@arabic\c@section.}
+%
+\makeatother
+\pagestyle{myplain}
+%

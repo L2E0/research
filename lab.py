@@ -1,8 +1,6 @@
 import argparse
-import gan_model
-import hsv_model
+import lab_model
 from data_gen import xygen, batchgen, epochgen, count_file, chunk
-from data_gen import *
 
 def get_args():
     parser = argparse.ArgumentParser(description="colorization")
@@ -12,7 +10,6 @@ def get_args():
     parser.add_argument('-c', '--category', type=str, default="grass")
     parser.add_argument('-m', '--mode', type=str, default='train')
     parser.add_argument('-s', '--step', type=int, default=100)
-    parser.add_argument('-p', '--pattern', type=str, default='hsv')
     args = parser.parse_args()
     return args
 
@@ -32,21 +29,16 @@ def train_data(category, transformer):
 
     return gen, val_gen
 
-def train(model, offset, resume=False, batch=32, step=100, epochs=100, category='grass', mode='train', pattern='hsv'):
+def train(model, offset, resume=False, batch=32, step=100, epochs=100, category='grass', mode='train'):
     print(offset)
     if offset != 0:
         model.load_weights()
-    transformer = img2hsv if pattern=='hsv' else img2bgr
-    xygen, val_gen = train_data(category, transformer)
-    if resume == False:
-        pass
-        #model.pre_train(xygen)
+    xygen, val_gen = train_data(category, img2lab)
     model.train(category, xygen, val_gen, batch, step, epochs, offset)
 
-def predict(model, offset, category, pattern):
+def predict(model, offset, category):
     model.load_weights()
-    transformer = img2hsv if pattern=='hsv' else img2bgr
-    model.predict(category, offset, transformer)
+    model.predict(category, offset)
 
 def read_offset(file):
     f = open(file, 'r')
@@ -54,11 +46,11 @@ def read_offset(file):
 
 if __name__  == "__main__":
     args = get_args()
-    model = gan_model.ColorizationModel() if args.pattern=='gan' else hsv_model.ColorizationModel()
-    offset = read_offset('%s.txt' % (args.pattern)) if args.resume or args.mode=='predict' else 0
+    model = lab_model.ColorizationModel()
+    offset = read_offset('epoch_lab.txt') if args.resume or args.mode=='predict' else 0
     if args.mode == 'train':
         train(model, offset, **vars(args))
     elif args.mode =='predict':
-        predict(model, offset, args.category, args.pattern)
+        predict(model, offset, args.category)
     else:
         print("^^;")

@@ -4,12 +4,13 @@ import os
 from keras import optimizers as op
 from keras.optimizers import Adam
 import numpy as np
-from data_gen import xygen, batchgen, epochgen, count_file, chunk
+from datetime import *
 from keras.utils import plot_model
 from skimage.measure import compare_ssim as ssim
 import cv2
 import model
 import predict
+from data_gen import *
 
 
 class ColorizationModel:
@@ -34,7 +35,8 @@ class ColorizationModel:
     def train(self, category, gen, val_gen, batch_size=32, step_size=100, epochs=100, offset=0):
         gen = batchgen(gen, batch_size)
         path = "valid_" + category
-        val_size = count_file(path)
+        val_size = 100
+        val_gen = chunk(val_gen, val_size)
 
         for epoch, steps in enumerate(epochgen(gen, epochs, step_size)):
             pred_gen = ((self.generator.predict(np.array([x]), verbose=0)[0], y) for x, y in next(val_gen))
@@ -46,16 +48,14 @@ class ColorizationModel:
             for step, (x, y) in enumerate(steps):
                 generated_image = self.generator.predict(x, verbose=0)
                 X = np.concatenate((y, generated_image))
-                y = [np.array([1, 0])] * batch_size + [np.array([0, 1])] * batch_size
-                y = np.array(y)
+                y = [1] * batch_size + [0] * batch_size
                 d_loss = self.discriminator.train_on_batch(X, y)
                 print("step %d d_loss : %f" % (step+1, d_loss))
-                label = [np.array([1, 0])] * batch_size
-                label = np.array(label)
+                label = [1] * batch_size
                 g_loss = self.d_on_g.train_on_batch(x, label)
                 print("step %d g_loss : %f" % (step+1, g_loss))
-                if step % 50 == 49:
-                    f = open('epoch_gan.txt', 'w')
+                if step == 99:
+                    f = open('gan.txt', 'w')
                     f.write('%d\n' % (epoch+offset+1))
                     f.write('d_loss%f\n' % (d_loss))
                     f.write('g_loss%f\n' % (g_loss))
@@ -64,16 +64,20 @@ class ColorizationModel:
                     self.discriminator.save_weights('discriminator', True)
 
     def pre_train(self, gen):
-        gen = batchgen(gen, batch_size)
-        self.generator.fit_generator(gen, 100, epochs=100, verbose=1)
+        gen = batchgen(gen, 100)
+        self.generator.compile(loss='mean_squared_error', optimizer=Adam())
+        self.generator.fit_generator(gen, 100, epochs=10, verbose=1)
+        self.generator.save_weights('generator', True)
 
-    def predict(self, category, epoch):
-        path = 'test_%s/' % (category)
-        gen = xygen(category)
-        gen = batchgen(gen, count_file(path))
+    def predict(self, category, epoch, transformer):
+        path = 'test_%s' % (category)
+        gen = xygen(path, transformer)
+        gen = batchgen(gen, 1)
         pre = 'predictions/%s_gan_epoch_%d' % (category, epoch)
         os.mkdir(pre)
-        predict.Predict_BGR(self.generator, category, pre)
+        plot_model(self.generator, ("%s/generator.png" % (pre)), show_shapes=True)
+        plot_model(self.discriminator, ("%s/discriminator.png" % (pre)), show_shapes=True)
+        predict.Predict_BGR(self.generator, gen, category, pre, count_file(path))
 
     def summary(self):
         self.generator.summary()

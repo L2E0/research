@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from keras.callbacks import EarlyStopping
+from keras.callbacks import EarlyStopping, ModelCheckpoint
 from keras.callbacks import TensorBoard
 from datetime import datetime
 import os
@@ -13,6 +13,10 @@ import model
 import plot
 import validation_data_gen
 from data_gen import *
+from plot import *
+from callbacks import *
+
+
 
 class ColorizationModel:
     def __init__(self):
@@ -25,8 +29,11 @@ class ColorizationModel:
         plot_model(self.mlp, ("hsv.png"), show_shapes=True)
 
     def train(self, category, gen, val_gen, batch_size=32, step_size=100, epochs=100, offset=0):
-        train_gen = load_train_data.Load_hsv(category, batch_size)
-        val_gen = validation_data_gen.Load_valid(category, 256)
+        train_gen = labgen(gen, batch_size)
+        val_gen = labgen(val_gen, batch_size)
+        checkpointer = ModelCheckpoint(filepath='hsv', verbose=1, save_best_only=True)
+        earlystopping = EarlyStopping(monitor='val_loss', patience=10, verbose=1)
+        losses = Save_Valloss('hsv')
         history = self.mlp.fit_generator(
                 train_gen, 
                 steps_per_epoch = step_size,
@@ -35,15 +42,14 @@ class ColorizationModel:
                 validation_steps = 10,
                 verbose=1,
                 initial_epoch = offset,
+                callbacks=[losses]
         )
         self.mlp.save_weights('hsv', True)
-        f = open('epoch_hsv.txt', 'w')
-        f.write('%d\n' % (epochs+offset))
-        f.close()
+        Plot_history(history.history, 'hsv.png')
 
-    def predict(self, category, offset):
+    def predict(self, category, offset, gomi):
         path = 'test_%s' % (category)
-        gen = xygen(path)
+        gen = xygen(path, img2hsv)
         pre = 'predictions/%s_hsv_epoch_%d' % (category, offset)
         os.mkdir(pre)
         plot_model(self.mlp, ("%s/mlp.png" % (pre)), show_shapes=True)

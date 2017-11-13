@@ -62,6 +62,7 @@ def Load_hsv(category, batch_size):
             h_list = np.array(h_list)
             s_list = np.array(s_list)
             mono_list = np.array(mono_list)
+            print(np.array([h_list, s_list]).shape)
             yield (mono_list, [h_list, s_list])
             mono_list = []
             h_list = []
@@ -106,3 +107,34 @@ def transform_img(img, hs):
     gry_cov = np.cov(gry) / np.max(np.absolute(np.cov(gry)))
     x = np.ravel(np.append(gry/255.0, gry_cov))
     return x, y
+
+def Load_lab(category, batch_size):
+    path = "train_" + category
+    mono_list = []
+    a_list = []
+    b_list = []
+
+
+    datagen = Gen(horizontal_flip=True,
+     vertical_flip=True,
+     rotation_range=180,
+     width_shift_range=0.2,
+     height_shift_range=0.2,
+     zoom_range=0.3)
+    imggen = datagen.flow_from_directory(directory='./', classes=[path], batch_size=1, class_mode=None)
+
+    for batch in imggen:
+        img = np.flip(batch[0], axis=2)
+        hsv = cv2.cvtColor(img, cv2.COLOR_BGR2Lab)
+        gry = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        a_list.append(np.ravel(hsv[:,:,1] / 255.0))
+        b_list.append(np.ravel(hsv[:,:,2] / 255.0))
+        mono_list.append(np.ravel(gry / 255.0))
+        if len(a_list) == batch_size:
+            a_list = np.array(a_list)
+            b_list = np.array(b_list)
+            mono_list = np.array(mono_list)
+            yield (mono_list, [a_list, b_list])
+            mono_list = []
+            a_list = []
+            b_list = []

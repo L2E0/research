@@ -7,17 +7,17 @@ from datetime import datetime
 from data_gen import xygen, batchgen, count_file
 
 
-def Predict_BGR(model, category, pre_dir):
+def Predict_BGR(model, gen, category, pre_dir, n):
     path = "test_" + category
-
-    gen = xygen(path)
-    x, y = next(batchgen(gen, count_file(path)))
-
-
-    pre = model.predict_on_batch(x)
-
-    for i, img in enumerate(pre):
+    print(pre_dir)
+    pli = []
+    for i in range(n):
+        x, y = next(gen)
+        pre = model.predict_on_batch(x)
+        pli.append(pre[0])
+    for i, img in enumerate(pli):
         out = np.array(img) * 255.0
+        #out = np.flip(out, axis=2)
         filename = "%s/%d.png" % (pre_dir, i)
         cv2.imwrite(filename, out)
 

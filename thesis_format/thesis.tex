@@ -1,0 +1,252 @@
+\documentclass[twocolumn,fleqn]{jsarticle}
+
+\usepackage[dvipdfmx]{graphicx}% 図を利用するため
+\usepackage{amsmath}%数式のAMS拡張機能を使う 
+\usepackage{newtxtext,newtxmath}% 欧文のフォントをTimesとHellveticaに
+\usepackage{float}% 図表を配置する % nidanfloat
+\usepackage{nidanfloat}% 図表を配置する
+\usepackage{ascmac}% 囲み
+\usepackage{gthesis}% 卒業研究用スタイル
+
+\myid{X1}
+
+\begin{document}
+\title{誤差逆伝播法を用いた画像のカラー化に関する研究}
+%\subtitle{サブタイトル（12pt明朝）}
+\author{下吉　賢信}
+\supervisor{濱川　恭央}
+%\maketitle
+\maketitle 
+
+\section{提出について}
+\noindent{}締切： {\headfont 2017年2月1日（水）16:10}\\
+提出物：A4用紙に印刷した論文と付録を2部\\
+　　　　論文と付録を1つのPDFにまとめたもの\\
+提出先：担任教員室
+
+提出に遅れた場合，原則として卒業研究の単位は認められない．
+
+\section{全体のページ書式}
+\begin{itemize}
+\item ワープロ等のDTPソフトで作成すること．
+\item 用紙はA4縦で，本文は2段組の横書きとする．
+\item 上余白25mm，下余白20mm，左右余白20mmとする．すべてのページで同じ余白とする．
+\item 文字の大きさは，10ptを基本とする．1ページあたりの行数は50行とし，
+1段の1行あたりの文字数は25文字とする．
+\item 1ページ目から「参考文献」のページまでで，6ページ以上15ページ以内であること．
+\item 1ページ目のみページ上部にタイトル，研究者名，指導教員名，あらまし，キーワードを記入する．
+この部分のみ，左右余白を30mmとする．
+\item 本文のページ番号は各ページの下部中央に，所定の形式で番号を付加すること．
+付録のページ番号は本文とは独立に付与すること．
+\item 図と表にはそれぞれ通し番号を付与し，本文中ではその番号を参照して説明すること．
+\end{itemize}
+
+余白の長さや行数，文字数は標準値を示した．
+若干の変更は可能とする．本資料は卒業研究論文の書式に合わせたサンプルである．
+
+\section{文字フォントについて}
+論文等を記述するにあたって，文字フォントを揃えて記述すると読みやすく，また，綺麗に見える．
+文字フォントについては，当文書内では明朝もしくはゴシックという表現で指定する．
+
+全体として日本語フォント2種類，欧文フォント2種類の使用を標準とする．
+図表内での使用フォントも同じ物を使用することを標準とする．
+例外としてプログラムリスト等の表示には，等幅のフォントを使用すると見やすくなる．
+\begin{flushleft}
+タイトル：\\
+　　14pt明朝，中央寄せ，行送り15pt\\
+サブタイトル：\\
+　　12pt明朝，中央寄せ，行送り1.5行\\
+研究者名，指導教員名：\\
+　　10pt明朝，中央寄せ\\
+あらまし：\\
+　　9pt明朝，あらましの部分のみ9ptゴシック,行送　　り12pt\\
+キーワード：\\
+　　9pt明朝，キーワードの部分のみ9ptゴシック,行　　送り12pt\\
+本文：\\
+　　10pt明朝，両端揃え，各段落の先頭で1文字分の　　字下げ
+\end{flushleft}
+
+明朝は，縦が太く横が細い，ウロコ（飾り）のあるフォントを使用する．
+例えば，日本語フォントでは，IPA P明朝や MS P明朝が該当する．
+同時に使用する英語等のフォントは，セリフ（飾り）のある Century や Times Roman などが該当する．
+ゴシックは，縦横などの線の太さが一定で飾りのないフォントを使用する．
+日本語で使用するフォントとしては，\textsf{IPA P}\textgt{ゴシック}や\textsf{MS P}\textgt{ゴシック}が該当する．
+同時に使用する英語等のフォントは，\textsf{Arial} や \textsf{Sans--serif}などが該当する\cite{奥村}．
+
+\section{章タイトルの形式（11ptゴシック）}
+章のタイトルは，11ptゴシックとする．タイトル行の前に0.5行の改行を付加する．
+番号は，〈章番号〉.とする．
+
+\subsection{節タイトルの形式（10ptゴシック）}
+節のタイトルは，10ptゴシックとする．タイトル行の前に0.5行の改行を付加する．
+番号は，〈章番号〉.〈節番号〉とする．
+
+\subsubsection{小節タイトルの形式（10ptゴシック）}
+小節のタイトルは，10ptゴシックとする．タイトル行の前に0.5行の改行を付加する．
+番号は，〈章番号〉.〈節番号〉.〈小節番号〉とする．
+
+\section{内容について}
+卒業研究は実験型研究と開発型研究に大きく分けられる．それぞれに対する論文の標準的な構成は以下のとおりである．
+
+\begin{itemize}
+\item 実験型研究の標準的な例
+\begin{enumerate}
+\item 研究題目，研究者名，指導教員名
+\item あらまし等
+\item 研究の背景，目的，概要など
+\item 理論
+\item 実験の概要，使用した機器や設備
+\item 実験結果
+\item 考察
+\item 結論（あとがき）
+\item 謝辞
+\item 参考文献
+\item 付録
+\end{enumerate}
+\item 開発型研究の標準的な例
+\begin{enumerate}
+\item 研究題目，研究者名，指導教員名
+\item あらまし等
+\item 研究の背景，目的，概要など
+\item 方法論
+\item 各構成要素の詳細
+\item 動作結果
+\item 評価
+\item 結論（あとがき）
+\item 謝辞
+\item 参考文献
+\item 付録
+\end{enumerate}
+\end{itemize}
+
+%\begin{figure}[!tb]
+%\centering
+%\includegraphics[scale=0.35]{gpio.png}
+%\caption{Raspberry Pi P1 Header}
+%\label{fig:pin}
+%\end{figure}%
+%
+%\begin{figure*}[!b]
+%\centering
+%\includegraphics[scale=0.6]{picpwm}
+%\caption{PICによるPWMモータドライバ}
+%\label{fig:pwm}
+%\end{figure*}%
+
+\section{図や表の挿入について}
+図の下には図番号とタイトルを添える．表には上に表番号とタイトルを添える．
+写真については，図と同様に下に写真番号とタイトルを添える．
+これらのキャプションは9ptゴシックとする．掲示した図表については，必ず本文中で説明する．
+
+図や表は，段の幅に収まるように作成することが，基本である.収まりきらない場合は，
+左右の段をまたぐことができる．
+いずれの場合でも，ページの上部もしくは下部に挿入する．段の途中で文章を分ける配置は好ましくない．
+また，図や写真の縦横比はオリジナルから変更することのないように心がける．
+
+図\ref{fig:pin}は\verb|http://jeena.net/rp-hw-button|に掲載されていたビットマップ形式（png形式）の図である．
+図中の文字は拡大縮小すると画素が目立ち美しくない．
+\mbox{図\ref{fig:pwm}}はベクトルデータ形式（WindowsのEMF形式をEPS形式に変換した）の図である．
+拡大しても画素が目立つことはない．
+可能な限り，ベクトルデータ形式で図を取り込むこと．
+表\ref{tbl:tbl1}は前期末の総点の分布である．
+\begin{table}[tb]
+\begin{center}
+\caption{総点の分布}
+\label{tbl:tbl1}
+\begin{tabular}{|rcr|c|}\hline
+\multicolumn{3}{|c|}{総点}&人\\\hline\hline
+ 500&～& 699&2\\\hline
+ 700&～& 899&11\\\hline
+ 900&～&1099&19\\\hline
+1100&～&1299&5\\\hline
+\end{tabular}
+\end{center}
+\end{table}%
+
+\section{参考文献について}
+参考文献は，研究で参考した文献や Webページ等で，卒業論文中で参考にしている順に，
+以下のようにリストアップしておく．
+参考文献に挙げたものを参考にしている部分に，必ずこのように番号を付加する\cite{長尾}．
+参考文献の見出しには，番号を振らないことが慣例である．
+
+\cite{長尾}以降の参考文献のデータは，和歌山大学システム工学部坂間千秋教授の「卒業論文の書き方」
+{\small\verb|http://www.wakayama-u.ac.jp/~sakama/sotsuron/|}からお借りした．
+これらは実際には利用されていないが，リストの書式のサンプルとしてあげてある．
+実際のリストの書式は，指導教員の指示に従い記述すること．
+
+\subsection{参考文献の書式}
+参考文献の見出しは，章見出しと同じ形式で番号を振らない．
+参考文献のリストは，9pt明朝とする．
+
+\section{その他}
+\begin{itemize}
+\item 本文は「～である」調を用いること．
+\item 句読点は，全角のコンマ，とピリオド．を用いること．
+\item 著作権法を順守し，他人の著作物（文章や図表）を自分の論文中に流用してはならない．
+必要な場合は引用の慣行に準ずること．すなわち，必要最小限の分量であること，改変をしないこと，出典を明示することである．
+\item ページ番号に使用する記号番号（X1の部分）は，後日連絡します．
+\end{itemize}
+
+\begin{thebibliography}{9}\small
+\bibitem{奥村} 奥村晴彦 他，［改訂第6版］\LaTeXe{}美文書作成入門，技術評論社，2013
+\bibitem{長尾} 長尾真，知識と推論，岩波講座ソフトウェア科学14，1988
+\bibitem{実近} 実近憲昭，ゲームとAI，人工知能学会誌 vol.5，pp.527--537，1990
+\bibitem{人工知能} 人工知能の歴史，\\\verb|http://www.jinkouchino-no-rekishi.com|，2010
+\end{thebibliography}
+
+\section{数式の書き方}
+数式には文中に$y=ax^2+bx+c$と数式を書く場合と，次のように別行立てで書く場合がある．
+\[y=ax^2+bx+c\]
+別行立ての数式には，\verb|equation|環境を用いて番号をつけることができる．
+\begin{equation}
+y=ax^2+bx+c
+\label{eq:niji}
+\end{equation}
+式\ref{eq:niji}は，2次関数の式である．
+
+\section{パッケージの利用方法}
+\verb|\documentclass[twocolumn,fleqn]{jsarticle}|と
+ヘッドラインに記述する．
+\verb|twocolumn|は2段組みにするため，
+\verb|fleqn|は数式を中央ではなく，左端をそろえるオプションである．
+
+論文を作成するにあたり，プリアンブル部に以下の記述を勧める．
+\begin{screen}
+\small
+\begin{verbatim}
+\usepackage[dvipdfmx]{graphicx}
+\usepackage{amsmath}
+\usepackage{newtxtext,newtxmath}
+\usepackage{float}
+\usepackage{nidanfloat}
+\usepackage{ascmac}
+\usepackage{gthesis}
+\end{verbatim}
+\end{screen}
+上から順に，
+\verb|graphicx|は図を取り込むために必要，
+\verb|amsmath|は数式のAMS拡張機能を使う，
+\verb|newtxtext|はTimesと\textsf{Hellvetica}を使用する，
+\verb|newtxmath|は数式のフォントをそろえるため，
+\verb|float|，\verb|nidanfloat|は図表の配置を適切にするため，
+\verb|ascmac|は上記のような枠などを作るため，
+最後の\verb|gthesis|は情報工学科用の論文スタイルである．
+
+\verb|\begin{document}|以降に
+\verb|\titile|命令でタイトルを指定，
+\verb|\subtitle|命令でサブタイトルを指定，
+サブタイトルがない場合は\verb|\subtitle|命令を使用しない．
+\verb|\author|で作者の氏名を
+\verb|suppervisor|で指導教員の氏名を指定する．
+\verb|abstract|環境にあらましを，
+\verb|keyword|環境にキーワードを書く．
+これらを指定したのち，\verb|\maketitle|命令を書いておくと1ページ目の
+上部が完成するので，以降に本文を記述する．
+
+\pLaTeX{}で\verb|jsarticle|を用いて作成した場合，Wordに比べて文字が小さめになるが，そのままでかまわない．
+
+\onecolumn
+\tableofcontents
+\listoffigures
+\listoftables
+\end{document}
