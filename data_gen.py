@@ -16,7 +16,9 @@ def xygen(path, transformer, **args):
         gry = cv2.cvtColor(src, cv2.COLOR_RGB2GRAY)
         src, gry = transformer(src, gry)
         gry = np.array(gry / 255.0)
-        yield gry, src
+
+        x = cv2.resize(src, (64, 64))
+        yield x, src
 
 def batchgen(gen, batch_size):
     for xylist in chunk(gen, batch_size):

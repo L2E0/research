@@ -38,6 +38,11 @@ class ColorizationModel:
         val_size = 100
         val_gen = chunk(val_gen, val_size)
 
+        pred_path = 'test_%s' % (category)
+        pred_gen = xygen(pred_path, img2bgr)
+        pred_gen = batchgen(pred_gen, 1)
+
+
         for epoch, steps in enumerate(epochgen(gen, epochs, step_size)):
             pred_gen = ((self.generator.predict(np.array([x]), verbose=0)[0], y) for x, y in next(val_gen))
             mapper = lambda pair:ssim(*pair, multichannel=True)
@@ -54,14 +59,16 @@ class ColorizationModel:
                 label = [1] * batch_size
                 g_loss = self.d_on_g.train_on_batch(x, label)
                 print("step %d g_loss : %f" % (step+1, g_loss))
-                if step == 99:
-                    f = open('gan.txt', 'w')
-                    f.write('%d\n' % (epoch+offset+1))
-                    f.write('d_loss%f\n' % (d_loss))
-                    f.write('g_loss%f\n' % (g_loss))
-                    f.close()
-                    self.generator.save_weights('generator', True)
-                    self.discriminator.save_weights('discriminator', True)
+
+            f = open('gan.txt', 'w')
+            f.write('%d\n' % (epoch+offset+1))
+            f.write('d_loss%f\n' % (d_loss))
+            f.write('g_loss%f\n' % (g_loss))
+            f.close()
+            self.generator.save_weights('generator', True)
+            self.discriminator.save_weights('discriminator', True)
+
+            #predict.Predict_BGR(self.generator, pred_gen, category, 'predictions/SRGAN', count_file(pred_path))
 
     def pre_train(self, gen):
         gen = batchgen(gen, 100)
