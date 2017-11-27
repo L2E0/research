@@ -1,0 +1,379 @@
+\documentclass[twocolumn,fleqn]{jsarticle}
+
+\usepackage[dvipdfmx]{graphicx}% 図を利用するため
+\usepackage{amsmath}%数式のAMS拡張機能を使う 
+\usepackage{newtxtext,newtxmath}% 欧文のフォントをTimesとHellveticaに
+\usepackage{float}% 図表を配置する % nidanfloat
+\usepackage{nidanfloat}% 図表を配置する
+\usepackage{ascmac}% 囲み
+\usepackage{gthesis}% 卒業研究用スタイル
+
+\myid{X1}
+\begin{document}
+\title{誤差逆伝播法を用いた画像のカラー化に関する研究}
+%\subtitle{サブタイトル（12pt明朝）}
+\author{下吉　賢信}
+\supervisor{濱川　恭央}
+%\maketitle
+\maketitle 
+
+\section{目的}
+　誤差逆伝播法（BackPropagation, BP法)を用いて、白黒画像のカラー化を行うことを目的とする。
+
+\section{理論}
+\subsection{ニューラルネットワーク(Neural Network, NN)}
+人間の脳は１００億から１４０億個の神経細胞が互いに繋がり、巨大なシステムを構築している。
+このような神経細胞を構成素子とし、計算機上でシミュレートすることを目指した回路網をニューラルネットワークと呼ぶ。
+ニューラルネットワークには様々なモデルがあるが、そのうちのひとつとして、パーセプトロンが挙げられる。
+\subsubsection{単層パーセプトロンとは}
+単層パーセプトロンとは、NNのひとつであり、複数の信号を入力として受け取り、ひとつの信号を出力するものである。
+その出力は１か０の２値であり、１を出力することを、「ニューロンが発火する」と表現することがある。。
+図\ref{fig:neuron}に２つの信号を入力として受け取るパーセプトロンを示す。
+$x_1$,$x_2$は入力信号、yは出力信号、$w_1$,$w_2$は重みと呼ばれ、式\ref{eq:perceptron}のような挙動を示す。
+図\ref{fig:neuron}における丸（○）は、ニューロンと呼ばれる。
+ここで、$\theta$は閾値を示す。\\
+\begin{equation}
+        y = \begin{cases}
+            0 & (w_1x_1 + w_2x_2 \leq \theta) \\
+            1 & (w_1x_1 + w_2x_2 > \theta)
+        \end{cases}
+        \label{eq:perceptron}
+\end{equation}
+　例えば、$(w_1,w_2,\theta) = (0.5, 0.5, 0.8)$のようにパラメータを設定すると、ANDゲートと同じ挙動を期待できる。
+
+\subsubsection{バイアス}
+式\ref{eq:perceptron}の$\theta$を$-b$として、式\ref{eq:perceptron_bias}に変換できる。
+\begin{equation}
+        y = \begin{cases}
+            0 & (b + w_1x_1 + w_2x_2 \leq 0) \\
+            1 & (b + w_1x_1 + w_2x_2 > 0)
+        \end{cases}
+        \label{eq:perceptron_bias}
+\end{equation}
+
+\begin{figure}[b]
+\centering
+\includegraphics[scale=0.35]{perceptron.png}
+\caption{パーセプトロン}
+\label{fig:neuron}
+\end{figure}
+
+\begin{figure}[tb]
+\centering
+\includegraphics[scale=0.8]{mlp.jpg}
+\caption{順伝播型ニューラルネットワーク}
+\label{fig:FFNN}
+\end{figure}
+
+ここで$b$をバイアスと呼ぶ。式\ref{eq:perceptron_bias}で示されるように、パーセプトロンでは入力信号に重みが乗算された値と
+バイアスの和が計算され、その値が０を上回ると１を出力し、そうでなければ０を出力する。
+このことから、バイアスはニューロンの発火のしやすさの度合いであるといえる。
+
+\subsubsection{順伝播型ニューラルネットワーク}
+単層パーセプトロンでは、線形非分離な問題を解くことができない。だが、パーセプトロンを多層にし、
+出力を実数値にすることにより、これを解決した。
+こうして出来たモデルを順伝播方ニューラルネットワーク(Feedforward neural network, FFNN)と言う。
+図\ref{fig:FFNN}にFFNNの例を示す。ここで、一番左の層を入力層、一番右の層を出力層、それぞれに挟まれた層を中間層または隠れ層と呼ぶ。
+中間層は数に特に決まりは無く、それぞれの層のニューロンの数にも制限は無い。\\
+　それぞれのニューロンは活性化関数を内包しており、それにより発火の仕方が決定される。
+
+\subsubsection{活性化関数}
+活性化関数を$h()$で表すとすると、式\ref{eq:perceptron_bias}は以下の式に書き換えられる。
+\begin{eqnarray}
+    a & = & b + w_1x_1 + w_2x_2 \\
+    y & = & h(a)\\
+    h(x) & = & \begin{cases}
+        0 & (x \leq 0) \\
+        1 & (x > 0)
+    \end{cases}
+    \label{eq:step}
+\end{eqnarray}　
+これを明示的に示すとすると、図\ref{fig:act_process}のようになる。
+
+\begin{figure}[tb]
+\centering
+\includegraphics[scale=0.8]{activation.jpg}
+\caption{活性化のプロセス}
+\label{fig:act_process}
+\end{figure}
+
+図に示され通りこれまでのニューロンの丸の中に、活性化関数によるプロセスがある。
+つまり、重みつき信号の和が$a$というノードになり、活性化関数$h()$によって$y$というノードに変換されることが示されている。
+ちなみに式\ref{eq:step}は、ステップ関数と呼ばれる活性化関数である。
+
+\subsubsection{活性化関数}
+本研究で利用した活性化関数を示す。
+\begin{itemize}
+    \item シグモイド関数 \\
+    　ニューラルネットワークでよく用いられる活性化関数のひとつであり、式\ref{eq:sigmoid}で表される。
+    出力が０から１の実数値である。
+    \begin{equation}
+        h(x) = \frac{1}{1 + exp(-x)}
+        \label{eq:sigmoid}
+    \end{equation}
+
+    \item ランプ関数(ReLU) \\
+    　式\ref{eq:relu}で表される。
+    後述する勾配消失問題を解決する関数として近年になって利用頻度が上がった。
+    \begin{equation}
+        h(x) = max(0, x)
+        \label{eq:relu}
+    \end{equation}
+\end{itemize}
+
+\subsection{学習}
+機械学習の問題では、訓練データとテストデータの２つに分けて、学習や実験などを行うのが一般的である。
+その場合、まず訓練データのみを用いて学習を行い、最適なパラメータを探索する。
+そして、テストデータを使って、その訓練したモデルの実力を評価する。
+訓練データとテストデータを分けるのは、モデルの汎用的な能力を評価するためである。
+
+\subsubsection{損失関数}
+損失関数はニューラルネットワークの性能の悪さを示す指標である。
+現在のニューラルネットワークが教師データに対してどれだけ適合していないかと言うことを表す。
+損失関数にマイナスをかけた値は、どれだけ性能がよいかと言う指標として解釈できるため、どちらを指標としたとしても行うことは本質的に同じである。
+損失関数として用いられる関数をいくつか以下に示す。
+入力するデータ点が$x$で学習させたい関数は$f(w,x)$、教師データを$t$とする。
+\begin{itemize}
+    \item 二乗損失 \\
+    　式\ref{eq:se}に示す。出力データが教師データからずれるにしたがって、そのずれの二乗の損失を与える関数である。
+    負のズレも、正のズレと同じ扱いである。
+    \begin{equation}
+        L = (t - f(w, x))^2
+        \label{eq:se}
+    \end{equation}
+    \item Huber損失　\\
+    　式\ref{eq:huber}に示す。この損失関数は、ズレがある範囲内ならば二乗損失を、それより外なら直線状に増加する損失を与える。
+    学習データにノイズが入った場合、それに引っ張られる学習を抑制することができる。
+    \begin{equation}
+        L = \begin{cases}
+            (t - f(w, x))^2 & (f \in [t - \delta, t + \delta]) \\
+            2\delta(|t - f| - \frac{\delta}{2}) & (otherwise)
+        \end{cases}
+        \label{eq:huber}
+    \end{equation}
+    \item $\varepsilon$-許容損失 \\
+    　式\ref{eq:e_permit}に示す。
+    ズレが$\pm\varepsilon$以内であれば、損失を与えない関数である。
+    うまく回帰が出来ていないデータに対してのみ重点的に学習を進めていくことになり、細かい部分は学習を行わない。
+    \begin{equation}
+        L = max(|t - f(w, x)| - \epsilon, 0)
+        \label{eq:e_permit}
+    \end{equation}
+\end{itemize}
+
+\subsubsection{勾配法}
+機械学習の問題の多くは、学習の際に最適なパラメータを探索することである。
+ニューラルネットワークも同様に最適なパラメータを学習時に見つけなければならない。
+最適なパラメータというのは、損失関数が最小値をとるときのパラメータの値である。
+喪失関数は、最小値まで勾配を持つ。
+しかし、一般的に損失関数は複雑で、パラメータ空間は広大であるため、どこに最小値をとるのか、見当がつかない。
+そこで、勾配をうまく利用して関数の最小値を探すことを目指したものが勾配法である。\\
+　勾配法では、現在の場所から勾配方向に一定の距離だけ進む。そして、移動した先でも同様に勾配を求め、また、その勾配方向へ進むと言うように、
+繰り返し勾配方向へ移動する。このように勾配方向へ進むことを繰り返すことにより、関数の値を徐々に減らすのが勾配法である。
+ニューラルネットワークの学習では勾配法がよく用いられる。
+例えば、式\ref{eq:grad}についての勾配法を数式で表すと式\ref{eq:grad_descent}のように書くことが出来きる。
+\begin{eqnarray}
+    f(x_0,x_1) & = & {x_0}^2 + {x_1}^2 \label{eq:grad} \\
+    x_0 & = & x_0 - \eta\frac{\partial f}{\partial x_0} \nonumber \\
+    x_1 & = & x_1 - \eta\frac{\partial f}{\partial x_1} \label{eq:grad_descent}
+\end{eqnarray}
+
+
+式\ref{eq:grad_descent}の$\eta$は学習率と呼ばれ、一度の学習でどれだけパラメータを更新するかを決める。\\
+　式\ref{eq:grad_descent}は一回の更新式を示しており、このステップを繰り返し行う。
+つまり、ステップごとに変数の値を更新していき、そのステップを何度か繰り返すことによって徐々に誤差関数の値を減らしていく。
+ここでは、変数が二つの場合を示しているが、変数の数が増えても、同じような式によって更新される。\\
+　勾配法は最小値を探す場合を{\bf 勾配降下法}、最大値を探す場合を{\bf 勾配上昇法}と言う。
+
+\subsubsection 誤差逆伝播
+ニューラルネットワークの重みのパラメータの勾配は、数値微分によって求められる。
+誤差逆伝播とは、重みパラメータの勾配\documentclass[twocolumn,fleqn]{jsarticle}
+
+\usepackage[dvipdfmx]{graphicx}% 図を利用するため
+\usepackage{amsmath}%数式のAMS拡張機能を使う 
+\usepackage{newtxtext,newtxmath}% 欧文のフォントをTimesとHellveticaに
+\usepackage{float}% 図表を配置する % nidanfloat
+\usepackage{nidanfloat}% 図表を配置する
+\usepackage{ascmac}% 囲み
+\usepackage{gthesis}% 卒業研究用スタイル
+
+\myid{X1}
+\begin{document}
+\title{誤差逆伝播法を用いた画像のカラー化に関する研究}
+%\subtitle{サブタイトル（12pt明朝）}
+\author{下吉　賢信}
+\supervisor{濱川　恭央}
+%\maketitle
+\maketitle 
+
+\section{目的}
+　誤差逆伝播法（BackPropagation, BP法)を用いて、白黒画像のカラー化を行うことを目的とする。
+
+\section{理論}
+\subsection{ニューラルネットワーク(Neural Network, NN)}
+人間の脳は１００億から１４０億個の神経細胞が互いに繋がり、巨大なシステムを構築している。
+このような神経細胞を構成素子とし、計算機上でシミュレートすることを目指した回路網をニューラルネットワークと呼ぶ。
+ニューラルネットワークには様々なモデルがあるが、そのうちのひとつとして、パーセプトロンが挙げられる。
+\subsubsection{単層パーセプトロンとは}
+単層パーセプトロンとは、NNのひとつであり、複数の信号を入力として受け取り、ひとつの信号を出力するものである。
+その出力は１か０の２値であり、１を出力することを、「ニューロンが発火する」と表現することがある。。
+図\ref{fig:neuron}に２つの信号を入力として受け取るパーセプトロンを示す。
+$x_1$,$x_2$は入力信号、yは出力信号、$w_1$,$w_2$は重みと呼ばれ、式\ref{eq:perceptron}のような挙動を示す。
+図\ref{fig:neuron}における丸（○）は、ニューロンと呼ばれる。
+ここで、$\theta$は閾値を示す。\\
+\begin{equation}
+        y = \begin{cases}
+            0 & (w_1x_1 + w_2x_2 \leq \theta) \\
+            1 & (w_1x_1 + w_2x_2 > \theta)
+        \end{cases}
+        \label{eq:perceptron}
+\end{equation}
+　例えば、$(w_1,w_2,\theta) = (0.5, 0.5, 0.8)$のようにパラメータを設定すると、ANDゲートと同じ挙動を期待できる。
+
+\subsubsection{バイアス}
+式\ref{eq:perceptron}の$\theta$を$-b$として、式\ref{eq:perceptron_bias}に変換できる。
+\begin{equation}
+        y = \begin{cases}
+            0 & (b + w_1x_1 + w_2x_2 \leq 0) \\
+            1 & (b + w_1x_1 + w_2x_2 > 0)
+        \end{cases}
+        \label{eq:perceptron_bias}
+\end{equation}
+
+\begin{figure}[b]
+\centering
+\includegraphics[scale=0.35]{perceptron.png}
+\caption{パーセプトロン}
+\label{fig:neuron}
+\end{figure}
+
+\begin{figure}[tb]
+\centering
+\includegraphics[scale=0.8]{mlp.jpg}
+\caption{順伝播型ニューラルネットワーク}
+\label{fig:FFNN}
+\end{figure}
+
+ここで$b$をバイアスと呼ぶ。式\ref{eq:perceptron_bias}で示されるように、パーセプトロンでは入力信号に重みが乗算された値と
+バイアスの和が計算され、その値が０を上回ると１を出力し、そうでなければ０を出力する。
+このことから、バイアスはニューロンの発火のしやすさの度合いであるといえる。
+
+\subsubsection{順伝播型ニューラルネットワーク}
+単層パーセプトロンでは、線形非分離な問題を解くことができない。だが、パーセプトロンを多層にし、
+出力を実数値にすることにより、これを解決した。
+こうして出来たモデルを順伝播方ニューラルネットワーク(Feedforward neural network, FFNN)と言う。
+図\ref{fig:FFNN}にFFNNの例を示す。ここで、一番左の層を入力層、一番右の層を出力層、それぞれに挟まれた層を中間層または隠れ層と呼ぶ。
+中間層は数に特に決まりは無く、それぞれの層のニューロンの数にも制限は無い。\\
+　それぞれのニューロンは活性化関数を内包しており、それにより発火の仕方が決定される。
+
+\subsubsection{活性化関数}
+活性化関数を$h()$で表すとすると、式\ref{eq:perceptron_bias}は以下の式に書き換えられる。
+\begin{eqnarray}
+    a & = & b + w_1x_1 + w_2x_2 \\
+    y & = & h(a)\\
+    h(x) & = & \begin{cases}
+        0 & (x \leq 0) \\
+        1 & (x > 0)
+    \end{cases}
+    \label{eq:step}
+\end{eqnarray}　
+これを明示的に示すとすると、図\ref{fig:act_process}のようになる。
+
+\begin{figure}[tb]
+\centering
+\includegraphics[scale=0.8]{activation.jpg}
+\caption{活性化のプロセス}
+\label{fig:act_process}
+\end{figure}
+
+図に示され通りこれまでのニューロンの丸の中に、活性化関数によるプロセスがある。
+つまり、重みつき信号の和が$a$というノードになり、活性化関数$h()$によって$y$というノードに変換されることが示されている。
+ちなみに式\ref{eq:step}は、ステップ関数と呼ばれる活性化関数である。
+
+\subsubsection{活性化関数}
+本研究で利用した活性化関数を示す。
+\begin{itemize}
+    \item シグモイド関数 \\
+    　ニューラルネットワークでよく用いられる活性化関数のひとつであり、式\ref{eq:sigmoid}で表される。
+    出力が０から１の実数値である。
+    \begin{equation}
+        h(x) = \frac{1}{1 + exp(-x)}
+        \label{eq:sigmoid}
+    \end{equation}
+
+    \item ランプ関数(ReLU) \\
+    　式\ref{eq:relu}で表される。
+    後述する勾配消失問題を解決する関数として近年になって利用頻度が上がった。
+    \begin{equation}
+        h(x) = max(0, x)
+        \label{eq:relu}
+    \end{equation}
+\end{itemize}
+
+\subsection{学習}
+機械学習の問題では、訓練データとテストデータの２つに分けて、学習や実験などを行うのが一般的である。
+その場合、まず訓練データのみを用いて学習を行い、最適なパラメータを探索する。
+そして、テストデータを使って、その訓練したモデルの実力を評価する。
+訓練データとテストデータを分けるのは、モデルの汎用的な能力を評価するためである。
+
+\subsubsection{損失関数}
+損失関数はニューラルネットワークの性能の悪さを示す指標である。
+現在のニューラルネットワークが教師データに対してどれだけ適合していないかと言うことを表す。
+損失関数にマイナスをかけた値は、どれだけ性能がよいかと言う指標として解釈できるため、どちらを指標としたとしても行うことは本質的に同じである。
+損失関数として用いられる関数をいくつか以下に示す。
+入力するデータ点が$x$で学習させたい関数は$f(w,x)$、教師データを$t$とする。
+\begin{itemize}
+    \item 二乗損失 \\
+    　式\ref{eq:se}に示す。出力データが教師データからずれるにしたがって、そのずれの二乗の損失を与える関数である。
+    負のズレも、正のズレと同じ扱いである。
+    \begin{equation}
+        L = (t - f(w, x))^2
+        \label{eq:se}
+    \end{equation}
+    \item Huber損失　\\
+    　式\ref{eq:huber}に示す。この損失関数は、ズレがある範囲内ならば二乗損失を、それより外なら直線状に増加する損失を与える。
+    学習データにノイズが入った場合、それに引っ張られる学習を抑制することができる。
+    \begin{equation}
+        L = \begin{cases}
+            (t - f(w, x))^2 & (f \in [t - \delta, t + \delta]) \\
+            2\delta(|t - f| - \frac{\delta}{2}) & (otherwise)
+        \end{cases}
+        \label{eq:huber}
+    \end{equation}
+    \item $\varepsilon$-許容損失 \\
+    　式\ref{eq:e_permit}に示す。
+    ズレが$\pm\varepsilon$以内であれば、損失を与えない関数である。
+    うまく回帰が出来ていないデータに対してのみ重点的に学習を進めていくことになり、細かい部分は学習を行わない。
+    \begin{equation}
+        L = max(|t - f(w, x)| - \epsilon, 0)
+        \label{eq:e_permit}
+    \end{equation}
+\end{itemize}
+
+\subsubsection{勾配法}
+機械学習の問題の多くは、学習の際に最適なパラメータを探索することである。
+ニューラルネットワークも同様に最適なパラメータを学習時に見つけなければならない。
+最適なパラメータというのは、損失関数が最小値をとるときのパラメータの値である。
+喪失関数は、最小値まで勾配を持つ。
+しかし、一般的に損失関数は複雑で、パラメータ空間は広大であるため、どこに最小値をとるのか、見当がつかない。
+そこで、勾配をうまく利用して関数の最小値を探すことを目指したものが勾配法である。\\
+　勾配法では、現在の場所から勾配方向に一定の距離だけ進む。そして、移動した先でも同様に勾配を求め、また、その勾配方向へ進むと言うように、
+繰り返し勾配方向へ移動する。このように勾配方向へ進むことを繰り返すことにより、関数の値を徐々に減らすのが勾配法である。
+ニューラルネットワークの学習では勾配法がよく用いられる。
+例えば、式\ref{eq:grad}についての勾配法を数式で表すと式\ref{eq:grad_descent}のように書くことが出来きる。
+\begin{eqnarray}
+    f(x_0,x_1) & = & {x_0}^2 + {x_1}^2 \label{eq:grad} \\
+    x_0 & = & x_0 - \eta\frac{\partial f}{\partial x_0} \nonumber \\
+    x_1 & = & x_1 - \eta\frac{\partial f}{\partial x_1} \label{eq:grad_descent}
+\end{eqnarray}
+
+
+式\ref{eq:grad_descent}の$\eta$は学習率と呼ばれ、一度の学習でどれだけパラメータを更新するかを決める。\\
+　式\ref{eq:grad_descent}は一回の更新式を示しており、このステップを繰り返し行う。
+つまり、ステップごとに変数の値を更新していき、そのステップを何度か繰り返すことによって徐々に誤差関数の値を減らしていく。
+ここでは、変数が二つの場合を示しているが、変数の数が増えても、同じような式によって更新される。\\
+　勾配法は最小値を探す場合を{\bf 勾配降下法}、最大値を探す場合を{\bf 勾配上昇法}と言う。
+
+\subsubsection 誤差逆伝播
+ニューラルネットワークの重みのパラメータの勾配は、数値微分によって求められる。
+誤差逆伝播とは、重みパラメータの計算を効率よく行う手法である。以下に誤差逆伝播の手順を示す。

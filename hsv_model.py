@@ -6,6 +6,7 @@ import os
 import argparse
 from keras.optimizers import Adam
 from keras.utils import plot_model
+from skimage.measure import compare_ssim as ssim
 
 
 import load_train_data
@@ -49,11 +50,14 @@ class ColorizationModel:
 
     def predict(self, category, offset, gomi):
         path = 'test_%s' % (category)
+        orig_path = path + '_orig'
         gen = xygen(path, img2hsv)
         pre = 'predictions/%s_hsv_epoch_%d' % (category, offset)
         os.mkdir(pre)
         plot_model(self.mlp, ("%s/mlp.png" % (pre)), show_shapes=True)
-        for i, img in zip(range(count_file(path)), gen):
+        pic_ssim = []
+        f = open('%s/ssim.txt' % (pre), 'w')
+        for i, img, orig in zip(range(count_file(path)), gen, os.listdir(orig_path)):
             x, y = img
             x = np.ravel(x)
             h, s = self.mlp.predict_on_batch(np.array([x]))
@@ -66,15 +70,21 @@ class ColorizationModel:
             out.resize((256, 256, 3))
             out = np.array(out, dtype='uint8')
             filepath = "%s/%d.png" % (pre, i)
+            origpath = "%s/%s" % (orig_path, orig)
+            src = cv2.imread(origpath, 1)
             out = cv2.cvtColor(out, cv2.COLOR_HSV2BGR)
             cv2.imwrite(filepath, out)
 
             #h_ssim = ssim(h, h_org)
             #s_ssim = ssim(s, s_org)
-            #pic_ssim = ssim(org, out, multichannel=True)
+            eva = ssim(src, out, multichannel=True)
+            f.write('%s.png: %f\n' % (i, eva))
+            pic_ssim.append(eva)
 
-            filename = "%s/%d.png" % (pre, i)
-            cv2.imwrite(filename, out)
+
+        f.write('sum: %f' % sum(pic_ssim))
+        f.write('average: %f' % (sum(pic_ssim) / count_file(path)))
+        f.close()
 
     def summary(self):
         self.mlp.summary()

@@ -38,9 +38,9 @@ def train(model, offset, resume=False, batch=32, step=100, epochs=100, category=
         model.load_weights()
     transformer = img2hsv if pattern=='hsv' else img2bgr
     xygen, val_gen = train_data(category, transformer)
-    if resume == False:
+    if resume == False and pattern == 'gan':
+        model.pre_train(xygen, val_gen)
         pass
-        #model.pre_train(xygen)
     model.train(category, xygen, val_gen, batch, step, epochs, offset)
 
 def predict(model, offset, category, pattern):

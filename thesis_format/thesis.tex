@@ -9,7 +9,6 @@
 \usepackage{gthesis}% 卒業研究用スタイル
 
 \myid{X1}
-
 \begin{document}
 \title{誤差逆伝播法を用いた画像のカラー化に関する研究}
 %\subtitle{サブタイトル（12pt明朝）}
@@ -18,15 +17,253 @@
 %\maketitle
 \maketitle 
 
-\section{提出について}
-\noindent{}締切： {\headfont 2017年2月1日（水）16:10}\\
-提出物：A4用紙に印刷した論文と付録を2部\\
-　　　　論文と付録を1つのPDFにまとめたもの\\
-提出先：担任教員室
+\section{目的}
+　誤差逆伝播法（BackPropagation, BP法)を用いて、白黒画像のカラー化を行うことを目的とする。
 
-提出に遅れた場合，原則として卒業研究の単位は認められない．
+\section{理論}
+\subsection{ニューラルネットワーク(Neural Network, NN)}
+人間の脳は１００億から１４０億個の神経細胞が互いに繋がり、巨大なシステムを構築している。
+このような神経細胞を構成素子とし、計算機上でシミュレートすることを目指した回路網をニューラルネットワークと呼ぶ。
+ニューラルネットワークには様々なモデルがあるが、そのうちのひとつとして、パーセプトロンが挙げられる。
+\subsubsection{単層パーセプトロンとは}
+単層パーセプトロンとは、NNのひとつであり、複数の信号を入力として受け取り、ひとつの信号を出力するものである。
+その出力は１か０の２値であり、１を出力することを、「ニューロンが発火する」と表現することがある。。
+図\ref{fig:neuron}に２つの信号を入力として受け取るパーセプトロンを示す。
+$x_1$,$x_2$は入力信号、yは出力信号、$w_1$,$w_2$は重みと呼ばれ、式\ref{eq:perceptron}のような挙動を示す。
+図\ref{fig:neuron}における丸（○）は、ニューロンと呼ばれる。
+ここで、$\theta$は閾値を示す。\\
+\begin{equation}
+        y = \begin{cases}
+            0 & (w_1x_1 + w_2x_2 \leq \theta) \\
+            1 & (w_1x_1 + w_2x_2 > \theta)
+        \end{cases}
+        \label{eq:perceptron}
+\end{equation}
+　例えば、$(w_1,w_2,\theta) = (0.5, 0.5, 0.8)$のようにパラメータを設定すると、ANDゲートと同じ挙動を期待できる。
 
-\section{全体のページ書式}
+\subsubsection{バイアス}
+式\ref{eq:perceptron}の$\theta$を$-b$として、式\ref{eq:perceptron_bias}に変換できる。
+\begin{equation}
+        y = \begin{cases}
+            0 & (b + w_1x_1 + w_2x_2 \leq 0) \\
+            1 & (b + w_1x_1 + w_2x_2 > 0)
+        \end{cases}
+        \label{eq:perceptron_bias}
+\end{equation}
+
+\begin{figure}[b]
+\centering
+\includegraphics[scale=0.35]{perceptron.png}
+\caption{パーセプトロン}
+\label{fig:neuron}
+\end{figure}
+
+\begin{figure}[tb]
+\centering
+\includegraphics[scale=0.8]{mlp.jpg}
+\caption{順伝播型ニューラルネットワーク}
+\label{fig:FFNN}
+\end{figure}
+
+ここで$b$をバイアスと呼ぶ。式\ref{eq:perceptron_bias}で示されるように、パーセプトロンでは入力信号に重みが乗算された値と
+バイアスの和が計算され、その値が０を上回ると１を出力し、そうでなければ０を出力する。
+このことから、バイアスはニューロンの発火のしやすさの度合いであるといえる。
+
+\subsubsection{順伝播型ニューラルネットワーク}
+単層パーセプトロンでは、線形非分離な問題を解くことができない。だが、パーセプトロンを多層にし、
+出力を実数値にすることにより、これを解決した。
+こうして出来たモデルを順伝播型ニューラルネットワーク(Feedforward neural network, FFNN)と言う。
+図\ref{fig:FFNN}にFFNNの例を示す。ここで、一番左の層を入力層、一番右の層を出力層、それぞれに挟まれた層を中間層または隠れ層と呼ぶ。
+中間層は数に特に決まりは無く、それぞれの層のニューロンの数にも制限は無い。\\
+　それぞれのニューロンは活性化関数を内包しており、それにより発火の仕方が決定される。
+
+\subsubsection{活性化関数}
+活性化関数を$h()$で表すとすると、式\ref{eq:perceptron_bias}は以下の式に書き換えられる。
+\begin{eqnarray}
+    a & = & b + w_1x_1 + w_2x_2 \\
+    y & = & h(a)\\
+    h(x) & = & \begin{cases}
+        0 & (x \leq 0) \\
+        1 & (x > 0)
+    \end{cases}
+    \label{eq:step}
+\end{eqnarray}　
+これを明示的に示すとすると、図\ref{fig:act_process}のようになる。
+
+\begin{figure}[tb]
+\centering
+\includegraphics[scale=0.8]{activation.jpg}
+\caption{活性化のプロセス}
+\label{fig:act_process}
+\end{figure}
+
+図に示され通りこれまでのニューロンの丸の中に、活性化関数によるプロセスがある。
+つまり、重みつき信号の和が$a$というノードになり、活性化関数$h()$によって$y$というノードに変換されることが示されている。
+ちなみに式\ref{eq:step}は、ステップ関数と呼ばれる活性化関数である。
+
+\subsubsection{活性化関数}
+本研究で利用した活性化関数を示す。
+\begin{itemize}
+    \item シグモイド関数 \\
+    　ニューラルネットワークでよく用いられる活性化関数のひとつであり、式\ref{eq:sigmoid}で表される。
+    出力が０から１の実数値である。
+    \begin{equation}
+        h(x) = \frac{1}{1 + exp(-x)}
+        \label{eq:sigmoid}
+    \end{equation}
+
+    \item ランプ関数(ReLU) \\
+    　式\ref{eq:relu}で表される。
+    後述する勾配消失問題を解決する関数として近年になって利用頻度が上がった。
+    \begin{equation}
+        h(x) = max(0, x)
+        \label{eq:relu}
+    \end{equation}
+\end{itemize}
+
+\subsection{学習}
+機械学習の問題では、訓練データとテストデータの２つに分けて、学習や実験などを行うのが一般的である。
+その場合、まず訓練データのみを用いて学習を行い、最適なパラメータを探索する。
+そして、テストデータを使って、その訓練したモデルの実力を評価する。
+訓練データとテストデータを分けるのは、モデルの汎用的な能力を評価するためである。
+
+\subsubsection{損失関数}
+損失関数はニューラルネットワークの性能の悪さを示す指標である。
+現在のニューラルネットワークが教師データに対してどれだけ適合していないかと言うことを表す。
+損失関数にマイナスをかけた値は、どれだけ性能がよいかと言う指標として解釈できるため、どちらを指標としたとしても行うことは本質的に同じである。
+損失関数として用いられる関数をいくつか以下に示す。
+入力するデータ点が$x$で学習させたい関数は$f(w,x)$、教師データを$t$とする。
+\begin{itemize}
+    \item 二乗損失 \\
+    　式\ref{eq:se}に示す。出力データが教師データからずれるにしたがって、そのずれの二乗の損失を与える関数である。
+    負のズレも、正のズレと同じ扱いである。
+    \begin{equation}
+        L = (t - f(w, x))^2
+        \label{eq:se}
+    \end{equation}
+    \item Huber損失　\\
+    　式\ref{eq:huber}に示す。この損失関数は、ズレがある範囲内ならば二乗損失を、それより外なら直線状に増加する損失を与える。
+    学習データにノイズが入った場合、それに引っ張られる学習を抑制することができる。
+    \begin{equation}
+        L = \begin{cases}
+            (t - f(w, x))^2 & (f \in [t - \delta, t + \delta]) \\
+            2\delta(|t - f| - \frac{\delta}{2}) & (otherwise)
+        \end{cases}
+        \label{eq:huber}
+    \end{equation}
+    \item $\varepsilon$-許容損失 \\
+    　式\ref{eq:e_permit}に示す。
+    ズレが$\pm\varepsilon$以内であれば、損失を与えない関数である。
+    うまく回帰が出来ていないデータに対してのみ重点的に学習を進めていくことになり、細かい部分は学習を行わない。
+    \begin{equation}
+        L = max(|t - f(w, x)| - \epsilon, 0)
+        \label{eq:e_permit}
+    \end{equation}
+\end{itemize}
+
+\subsubsection{勾配法}
+機械学習の問題の多くは、学習の際に最適なパラメータを探索することである。
+ニューラルネットワークも同様に最適なパラメータを学習時に見つけなければならない。
+最適なパラメータというのは、損失関数が最小値をとるときのパラメータの値である。
+喪失関数は、最小値まで勾配を持つ。
+しかし、一般的に損失関数は複雑で、パラメータ空間は広大であるため、どこに最小値をとるのか、見当がつかない。
+そこで、勾配をうまく利用して関数の最小値を探すことを目指したものが勾配法である。\\
+　勾配法では、現在の場所から勾配方向に一定の距離だけ進む。そして、移動した先でも同様に勾配を求め、また、その勾配方向へ進むと言うように、
+繰り返し勾配方向へ移動する。このように勾配方向へ進むことを繰り返すことにより、関数の値を徐々に減らすのが勾配法である。
+ニューラルネットワークの学習では勾配法がよく用いられる。
+例えば、式\ref{eq:grad}についての勾配法を数式で表すと式\ref{eq:grad_descent}のように書くことが出来きる。
+\begin{eqnarray}
+    f(x_0,x_1) & = & {x_0}^2 + {x_1}^2 \label{eq:grad} \\
+    x_0 & = & x_0 - \eta\frac{\partial f}{\partial x_0} \nonumber \\
+    x_1 & = & x_1 - \eta\frac{\partial f}{\partial x_1} \label{eq:grad_descent}
+\end{eqnarray}
+
+
+式\ref{eq:grad_descent}の$\eta$は学習率と呼ばれ、一度の学習でどれだけパラメータを更新するかを決める。\\
+　式\ref{eq:grad_descent}は一回の更新式を示しており、このステップを繰り返し行う。
+つまり、ステップごとに変数の値を更新していき、そのステップを何度か繰り返すことによって徐々に誤差関数の値を減らしていく。
+ここでは、変数が二つの場合を示しているが、変数の数が増えても、同じような式によって更新される。\\
+　勾配法は最小値を探す場合を{\bf 勾配降下法}、最大値を探す場合を{\bf 勾配上昇法}と言う。
+
+\begin{figure}[b]
+\centering
+\includegraphics[scale=0.4]{bp.png}
+\caption{誤差逆伝播}
+\label{fig:bp}
+\end{figure}
+
+\subsubsection{誤差逆伝播}
+誤差が出力とは逆に伝播していくためBP法と名付けられた。
+図\ref{fig:bp}のように望ましい出力との誤差を逆伝播させることにより次第に結合係数を変化させ、
+最終的に正しい解を得られるようにする手法である。\\
+　誤差逆伝播を行う為には、活性化関数が微分可能であることが必要不可欠である。
+ステップ関数は微分不可能であったため、それに近い出力を持ち、且つ微分可能であるシグモイド関数が考案された。
+シグモイド関数の微分は式\ref{eq:diff_sigmoid}に表されるように、単純である。
+
+\begin{equation}
+    f(x)' = \left(\frac {1}{1 + exp(-x)}\right)' = f(x)(1 - f(x))
+    \label{eq:diff_sigmoid}
+\end{equation}
+
+\subsubsection{勾配消失問題}
+誤差逆伝播では出力値の微分が学習の係数にかかっている。
+シグモイド関数が活性化関数だった場合、入力が大きくなればなる程微分の値は小さくなっていくため、学習が滞ってしまうことがある。
+これを、勾配消失問題と呼ぶ。
+複数の層でこれが起こった場合、誤差逆伝播で誤差を伝えていくうちに、誤差が正しく伝播されなくなる。
+これを解決する為の関数がReLUである。ReLUは入力値が正であれば、入力値をそのまま出力する。
+このとき微分は必ず１の値を取り、出力の値が学習を滞らせることが一切無くなる。
+
+\subsubsection{スパース化}
+ReLUのもうひとつの特徴は、ネットワークのスパース化に貢献すると言う点である。
+ニューラルネットワークがスパースであるとは、出力が０であるユニットが多数存在することを指す。
+あるユニットへのい入力が０未満だった場合、ReLUの微分は０であるため、これが学習の係数に掛かり、そのユニットは全く学習が行われなくなる。
+その後、そのユニットに対する学習は行われなくなり、残ったユニットだけで学習が行われる。
+ニューラルネットワークは本来冗長であるため、学習するパラメータを厳選するという点でにおいてもReLUは貢献している。
+
+\begin{table}[tb]
+    \caption{実行環境}
+    \begin{tabular}{|l|l|} \hline
+        OS & Windows 7 Enterprise \\ \hline
+        Processor & Intel Core i7-4820k CPU @ 3.70GHz \\ \hline
+        RAM & 32.0GB \\ \hline
+        GPU & GeForce GTX 1080Ti\\ \hline
+        GPU Memory & 11.0GB \\ \hline
+    \end{tabular}
+    \label{tab:div_env}
+\end{table}
+\section{実験}
+実行環境を表\ref{tab:div_env}に示す。
+
+\subsection{研究手法}
+画像は、ピクセルごとにRGBのパラメータを持つ。
+RGBとは、赤、緑、青、の３つの原色を混ぜて幅広い色を再現する手法である。
+RGBそれぞれをFFNNに学習させてカラー化を行うことは冗長であり、計算機の資源不足に陥ることも考えられる。
+そのため、RGBをHSV色空間へ変換してから学習させる手法を提案する。
+HSV空間とは、色相、彩度、明度で色を表現する空間であり、明度Vはカラー化の前後で変化しない。
+そのため、学習させる必要のあるものは、H,Sの２つのみとなり、より簡易で高性能なニューラルネットワークを構成できると考えた。
+この手法を基に、２つの実験を行った。
+
+\begin{figure}[tb]
+\centering
+\includegraphics[scale=0.3]{model.png}
+\caption{モデル}
+\label{fig:model}
+\end{figure}
+
+\subsection{最適なモデルの考察}
+まず、図\ref{fig:model}のようなモデルを考案した。
+青色の四角い枠で囲まれた小さなNNをPNN(a Partial Neural Network)と呼ぶ。
+このPNNをつなぎ合わせていくのだが、その途中に図\ref{fig:model}に示されるように、結合を無視し、PNNの出力との和をとる層がある。
+これをskip connectionと呼ぶ。
+FFNNは、層が深くなるにつれ入力データの詳細な部分が曖昧になっていく。その解決を図るため、skip connectionを用いて、
+浅い層の情報を加味したNNを構成することを目指し、実装した。
+本実験の目的は最適なPNNの数を検討することである。
+出力画像の評価指標はSSIMを用いた。
+SSIMは、輝度、コントラスト、周囲のピクセル平均、分散、共分散をとることで、ピクセル単体でなく周囲との相関を取り込んだ指標であり、
+人間の資格特性を反映した評価の手法である。
+
+
+
 \begin{itemize}
 \item ワープロ等のDTPソフトで作成すること．
 \item 用紙はA4縦で，本文は2段組の横書きとする．

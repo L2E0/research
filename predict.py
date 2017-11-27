@@ -2,7 +2,7 @@ import os
 import numpy as np
 import cv2
 import gc
-#from skimage.measure import compare_ssim as ssim
+from skimage.measure import compare_ssim as ssim
 from datetime import datetime
 from data_gen import xygen, batchgen, count_file
 
@@ -14,11 +14,13 @@ def Predict_BGR(model, gen, category, pre_dir, n):
     for i in range(n):
         x, y = next(gen)
         pre = model.predict_on_batch(x)
+        filename = "predictions/SRGAN/%d_orig.png" % (i)
+        cv2.imwrite(filename, x[0]*255.0)
         pli.append(pre[0])
     for i, img in enumerate(pli):
         out = np.array(img) * 255.0
         #out = np.flip(out, axis=2)
-        filename = "%s/%d.png" % (pre_dir, i)
+        filename = "predictions/SRGAN/%d.png" % (i)
         cv2.imwrite(filename, out)
 
 
