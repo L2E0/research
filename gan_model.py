@@ -1,4 +1,4 @@
-from keras.callbacks import EarlyStopping
+from keras.callbacks import EarlyStopping, ModelCheckpoint
 from datetime import datetime
 import os
 from keras import optimizers as op
@@ -20,13 +20,14 @@ class ColorizationModel:
         self.d_on_g = model.Generator_containing_discriminator(self.generator, self.discriminator)
         d_optim = Adam(lr=1e-5, beta_1=0.1)
         g_optim = Adam(lr=2e-4, beta_1=0.5)
+        self.discriminator.trainable = False
         self.d_on_g.compile(loss='binary_crossentropy', optimizer=g_optim)
         self.discriminator.trainable = True
         self.discriminator.compile(loss='binary_crossentropy', optimizer=d_optim)
 
     def load_weights(self):
         self.generator.load_weights('generator')
-        self.discriminator.load_weights('discriminator')
+        #self.discriminator.load_weights('discriminator')
 
     def plot(self):
         plot_model(self.generator, ("generator.png"), show_shapes=True)
@@ -70,18 +71,21 @@ class ColorizationModel:
 
             #predict.Predict_BGR(self.generator, pred_gen, category, 'predictions/SRGAN', count_file(pred_path))
 
-    def pre_train(self, gen):
-        gen = batchgen(gen, 100)
+    def pre_train(self, gen, val_gen):
+        gen = batchgen(gen, 8)
+        val_gen = batchgen(val_gen, 8)
         self.generator.compile(loss='mean_squared_error', optimizer=Adam())
-        self.generator.fit_generator(gen, 100, epochs=10, verbose=1)
+        checkpointer = ModelCheckpoint(filepath='generator', verbose=1, save_best_only=True)
+        self.generator.fit_generator(gen, 100, epochs=30, verbose=1
+                ,validation_data=val_gen, validation_steps=10)
         self.generator.save_weights('generator', True)
 
     def predict(self, category, epoch, transformer):
-        path = 'test_%s' % (category)
+        path = 'test_%s_orig' % (category)
         gen = xygen(path, transformer)
         gen = batchgen(gen, 1)
-        pre = 'predictions/%s_gan_epoch_%d' % (category, epoch)
-        os.mkdir(pre)
+        pre = 'predictions/SRGAN'
+        #os.mkdir(pre)
         plot_model(self.generator, ("%s/generator.png" % (pre)), show_shapes=True)
         plot_model(self.discriminator, ("%s/discriminator.png" % (pre)), show_shapes=True)
         predict.Predict_BGR(self.generator, gen, category, pre, count_file(path))
